@@ -33,7 +33,6 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["SUPER_ADMIN", "COMPANY_ADMIN", "EMPLOYEE"],
-      required: [true, "Role is required"],
     },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,

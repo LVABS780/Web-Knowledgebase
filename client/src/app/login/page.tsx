@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -17,27 +15,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { BookOpen, ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { BookOpen, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { type LoginForm, loginSchema } from "@/lib/userSchema";
 import { useLogin } from "@/hooks/useLogin";
 import { useAuth } from "../contexts/auth-context";
 
 export default function LoginPage() {
-  const router = useRouter();
   const { user } = useAuth();
   const role = user?.role;
 
   const normalizedRole =
-    role === "super_admin"
+    role === "SUPER_ADMIN"
       ? "SUPER_ADMIN"
-      : role === "company_admin"
+      : role === "COMPANY_ADMIN"
       ? "COMPANY_ADMIN"
       : undefined;
 
   const { register, handleSubmit, formState } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { role: (normalizedRole as LoginForm["role"]) ?? undefined },
+    defaultValues: {
+      email: "",
+      password: "",
+    },
     mode: "onTouched",
   });
 
@@ -45,26 +45,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const mutation = useLogin();
 
-  const getDashboardRoute = (roleValue?: LoginForm["role"]) => {
-    switch (roleValue) {
-      case "SUPER_ADMIN":
-        return "/super-admin/dashboard";
-      case "COMPANY_ADMIN":
-        return "/company-admin/dashboard";
-      case "EMPLOYEE":
-        return "/employee/dashboard";
-      default:
-        return "/";
-    }
-  };
-
   const onSubmit = (values: LoginForm) => {
-    mutation.mutate(values, {
-      onSuccess: () => {
-        const target = getDashboardRoute(values.role);
-        router.push(target);
-      },
-    });
+    mutation.mutate(values);
   };
 
   const roleLabel =
@@ -77,14 +59,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <Link
-          href="/"
-          className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors mb-6 group"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-          Back to Home
-        </Link>
-
         <Card className="border-2 shadow-lg">
           <CardHeader className="text-center space-y-4 p-6">
             <div className="flex items-center justify-center space-x-2">
@@ -105,11 +79,6 @@ export default function LoginPage() {
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-6"
             >
-              <input
-                type="hidden"
-                {...register("role")}
-              />
-
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -165,9 +134,10 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
+                disabled={mutation.isPending}
                 className="w-full py-3 text-lg hover:scale-105 transition-transform duration-200"
               >
-                Sign In
+                {mutation.isPending ? "Signing in..." : "Sign In"}
               </Button>
 
               {mutation.isError && (
