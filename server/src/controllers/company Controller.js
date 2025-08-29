@@ -15,7 +15,7 @@ exports.createCompany = async (req, res) => {
 
     const { name, email, phone, password, address } = req.body;
 
-    if (!name || !email || !phone || !password) {
+    if (!name || !email || !password) {
       await session.abortTransaction();
       session.endSession();
       return res
@@ -23,9 +23,12 @@ exports.createCompany = async (req, res) => {
         .json({ success: false, message: "Missing required fields" });
     }
 
-    const existingUser = await User.findOne({
-      $or: [{ email: email }, { phone: phone }],
-    }).lean();
+    const orClauses = [{ email: email }];
+    if (phone) {
+      orClauses.push({ phone: phone });
+    }
+
+    const existingUser = await User.findOne({ $or: orClauses }).lean();
 
     if (existingUser) {
       await session.abortTransaction();
@@ -55,7 +58,7 @@ exports.createCompany = async (req, res) => {
         {
           name,
           email,
-          phone,
+          ...(phone ? { phone } : {}),
           password: hashedPassword,
           role: "COMPANY_ADMIN",
           companyId: newCompany._id,
