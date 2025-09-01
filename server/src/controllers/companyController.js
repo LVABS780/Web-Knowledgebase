@@ -44,6 +44,7 @@ exports.createCompany = async (req, res) => {
     const newCompanyArr = await Company.create(
       [
         {
+          name,
           address: address || "",
           superAdminId: req.user.id,
         },
@@ -106,7 +107,7 @@ exports.updateCompany = async (req, res) => {
     }
 
     const { companyId } = req.params;
-    const { companyAddress, isActive, name, email, phone, password } = req.body;
+    const { address, isActive, name, email, phone, password } = req.body;
 
     const company = await Company.findById(companyId).session(session);
     if (!company) {
@@ -117,8 +118,11 @@ exports.updateCompany = async (req, res) => {
         .json({ success: false, message: "Company not found" });
     }
 
-    if (typeof companyAddress !== "undefined") company.address = companyAddress;
+    if (typeof address !== "undefined") company.address = address;
     if (typeof isActive !== "undefined") company.isActive = isActive;
+    if (typeof name !== "undefined") company.name = name;
+
+    await company.save({ session });
 
     const updatedCompany = await Company.findById(companyId)
       .lean()
@@ -224,6 +228,53 @@ exports.deleteCompany = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Failed to delete company" });
+  }
+};
+
+exports.getCompanyById = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    const company = await Company.findById(companyId).lean();
+    if (!company) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Company not found" });
+    }
+
+    const companyAdmin = await User.findOne({
+      companyId: company._id,
+      role: "COMPANY_ADMIN",
+    })
+      .select("-password")
+      .lean();
+
+    const superAdmin = await User.findById(company.superAdminId)
+      .select("-password")
+      .lean();
+
+    const result = {
+      company,
+      companyAdmin,
+      superAdmin,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error("Get company by ID error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch company" });
   }
 };
 

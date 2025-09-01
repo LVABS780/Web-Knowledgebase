@@ -53,10 +53,15 @@ const userSchema = new mongoose.Schema(
 
 const companySchema = new mongoose.Schema(
   {
+    name: {
+      type: String,
+      required: [true, "Company name is required"],
+      trim: true,
+      maxlength: [100, "Company name cannot exceed 100 characters"],
+    },
     address: {
       type: String,
     },
-
     superAdminId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
