@@ -5,6 +5,7 @@ import { AuthProvider } from "./contexts/auth-context";
 
 import ReactQueryProvider from "@/utils/react-query-provider";
 import ProtectedLayout from "@/components/protected-layout";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,14 @@ export default function RootLayout({
       >
         <ReactQueryProvider>
           <AuthProvider>
-            <ProtectedLayout>{children}</ProtectedLayout>
+            <ProtectedLayout>
+              {children}
+              <Toaster
+                position="top-right"
+                richColors
+                expand={true}
+              />
+            </ProtectedLayout>
           </AuthProvider>
         </ReactQueryProvider>
       </body>

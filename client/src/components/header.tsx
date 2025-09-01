@@ -46,7 +46,7 @@ export default function Header() {
               variant="outline"
               size="sm"
             >
-              <Link href="/login">Login</Link>
+              <Link href="/admin/login">Login</Link>
             </Button>
           )}
         </div>
