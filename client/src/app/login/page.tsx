@@ -146,7 +146,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full py-3 text-lg hover:scale-105 transition-transform duration-200"
+                className="w-full py-3 text-lg bg-[#6A00B4] hover:bg-[#7f04d4] hover:scale-105 transition-transform duration-200"
               >
                 {mutation.isPending ? "Signing in..." : "Sign In"}
               </Button>

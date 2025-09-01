@@ -149,7 +149,7 @@ const CompanyRegistrationSheet = ({
           </span>
         ) : (
           <Button
-            className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
+            className="bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
             variant="outline"
           >
             Register Company
@@ -191,7 +191,7 @@ const CompanyRegistrationSheet = ({
             </div>
             <div className="space-y-1.5">
               <Label>
-                Admin Email
+                Company Email
                 {!isEditMode && <span className="text-red-500 ml-1">*</span>}
               </Label>
               <Input
@@ -205,7 +205,7 @@ const CompanyRegistrationSheet = ({
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Admin Phone</Label>
+              <Label>Company Phone</Label>
               <Input
                 type="tel"
                 {...register("phone")}
@@ -288,7 +288,7 @@ const CompanyRegistrationSheet = ({
             <Button
               type="button"
               variant="outline"
-              className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
+              className="bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
               onClick={() => setIsRegisterSheetOpen(false)}
               disabled={isSubmitting}
             >
@@ -297,7 +297,7 @@ const CompanyRegistrationSheet = ({
             <Button
               type="button"
               onClick={() => reset()}
-              className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
+              className="bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
               variant="outline"
               disabled={isSubmitting}
             >
@@ -306,7 +306,7 @@ const CompanyRegistrationSheet = ({
             <Button
               variant="outline"
               type="submit"
-              className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
+              className="bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
               disabled={isSubmitting}
             >
               {isSubmitting

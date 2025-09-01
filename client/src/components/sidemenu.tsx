@@ -22,17 +22,20 @@ import { AvatarFallback } from "@radix-ui/react-avatar";
 const baseItems = [
   {
     title: "Knowledge Base",
-    url: "/knowledgebase",
+    url: "/",
     icon: Notebook,
   },
 ];
 
-const adminItems = [
+const authenticatedItems = [
   {
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
   },
+];
+
+const adminItems = [
   {
     title: "Companies",
     url: "/companies",
@@ -52,10 +55,12 @@ const KnowledgeBaseSidebar = () => {
   useEffect(() => {
     if (role === "SUPER_ADMIN") {
       setMenuItems(adminItems);
+    } else if (user) {
+      setMenuItems([...authenticatedItems, ...baseItems]);
     } else {
       setMenuItems(baseItems);
     }
-  }, [role]);
+  }, [role, user]);
 
   return (
     <Sidebar collapsible="icon">
@@ -89,7 +94,7 @@ const KnowledgeBaseSidebar = () => {
                   asChild
                   className={`${
                     pathname === item.url
-                      ? "bg-[#6A00B4] text-white hover:bg-[#6A00B4] hover:text-white"
+                      ? "bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
                       : ""
                   }`}
                   onClick={() => setOpenMobile(false)}

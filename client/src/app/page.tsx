@@ -1,12 +1,12 @@
 "use client";
-import { redirect } from "next/navigation";
-import { useAuth } from "./contexts/auth-context";
 
-export default function RootRedirect() {
-  const { token } = useAuth();
-  if (token) {
-    redirect("/dashboard");
-  } else {
-    redirect("/knowledgebase");
-  }
+export default function KnowledgeBasePage() {
+  return (
+    <div className="space-y-2 p-6">
+      <h1 className="text-2xl font-semibold">Knowledge Base</h1>
+      <p className="text-muted-foreground">
+        Your knowledge content will render here.
+      </p>
+    </div>
+  );
 }
