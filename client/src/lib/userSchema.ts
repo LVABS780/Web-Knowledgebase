@@ -15,6 +15,10 @@ export type LoginForm = z.infer<typeof loginSchema>;
 export const companyCreateSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Please enter valid email"),
+  phone: z
+    .string()
+    .regex(/^\d{10}$/, "Phone must be 10 digits")
+    .optional(),
   password: z.string().min(6, "Password must be at least 6 chars"),
   address: z.string().optional(),
 });
@@ -28,8 +32,8 @@ const emptyToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
   );
 
 export const companyUpdateSchema = z.object({
-  companyId: z.string().min(1),
-  companyAddress: emptyToUndefined(z.string()),
+  companyId: z.string(),
+  address: emptyToUndefined(z.string()),
   isActive: z.boolean().optional(),
   name: emptyToUndefined(z.string()),
   email: emptyToUndefined(z.string().email("Please enter valid email")),
@@ -37,7 +41,7 @@ export const companyUpdateSchema = z.object({
     z.string().regex(/^\d{10}$/i, "Phone must be 10 digits")
   ),
   password: emptyToUndefined(
-    z.string().min(6, "Password must be at least 6 chars")
+    z.string().min(6, "Password must be 6 chars or more")
   ),
 });
 

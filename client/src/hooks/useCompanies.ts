@@ -3,6 +3,7 @@ import {
   createCompany,
   deleteCompany,
   fetchCompanies,
+  fetchCompanyById,
   updateCompany,
   CreateCompanyPayload,
   UpdateCompanyPayload,
@@ -13,6 +14,17 @@ export function useCompaniesQuery() {
   return useQuery<CompanyItem[]>({
     queryKey: ["companies"],
     queryFn: fetchCompanies,
+  });
+}
+
+export function useCompanyById(
+  companyId: string | undefined,
+  enabled: boolean = true
+) {
+  return useQuery<CompanyItem>({
+    queryKey: ["company", companyId],
+    queryFn: () => fetchCompanyById(companyId!),
+    enabled: enabled && !!companyId,
   });
 }
 

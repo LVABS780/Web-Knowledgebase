@@ -2,6 +2,7 @@ import { API } from "@/lib/api-client";
 
 export type Company = {
   _id: string;
+  name: string;
   address: string;
   isActive: boolean;
   superAdminId: string;
@@ -24,6 +25,7 @@ export type CompanyItem = {
     name?: string;
     email?: string;
   } | null;
+  isActive: boolean;
 };
 
 export type CreateCompanyPayload = {
@@ -39,6 +41,13 @@ export async function fetchCompanies(): Promise<CompanyItem[]> {
   return res.data.data as CompanyItem[];
 }
 
+export async function fetchCompanyById(
+  companyId: string
+): Promise<CompanyItem> {
+  const res = await API.get(`/company/${companyId}`);
+  return res.data.data as CompanyItem;
+}
+
 export async function createCompany(payload: CreateCompanyPayload) {
   const res = await API.post("/company", payload);
   return res.data;
@@ -46,7 +55,7 @@ export async function createCompany(payload: CreateCompanyPayload) {
 
 export type UpdateCompanyPayload = {
   companyId: string;
-  companyAddress?: string;
+  address?: string;
   isActive?: boolean;
   name?: string;
   email?: string;
