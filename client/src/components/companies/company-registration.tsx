@@ -276,6 +276,7 @@ const CompanyRegistrationSheet = ({
                       <Switch
                         checked={Boolean(field.value)}
                         onCheckedChange={field.onChange}
+                        className="data-[state=checked]:bg-[#6A00B4] data-[state=unchecked]:bg-gray-300"
                       />
                     </div>
                   </label>
