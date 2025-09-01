@@ -50,11 +50,16 @@ const CompanyPage = () => {
           </Button>
         );
       },
-      cell: ({ row }) => (
-        <span className={`${!row.original.company.isActive && "text-red-500"}`}>
-          {row.original.company._id.slice(-8)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const formattedId = `C${String(row.index + 1).padStart(3, "0")}`;
+        return (
+          <span
+            className={`${!row.original.company.isActive && "text-red-500"}`}
+          >
+            {formattedId}
+          </span>
+        );
+      },
     },
     {
       id: "name",

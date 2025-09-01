@@ -1,18 +1,23 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/app/contexts/auth-context";
-import Link from "next/link";
 import { BookOpen } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default function Header() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 fixed top-0 inset-x-0 z-50 w-full">
-      <div className="flex items-center justify-between h-14 px-4 gap-3">
+    <header className="bg-white dark:bg-black z-50 sticky top-0 w-full flex items-center justify-between px-5 py-1 border-b shadow-md print:hidden">
+      <div className="flex items-center justify-between h-14 px-4 gap-3 w-full">
         <div className="flex items-center gap-2 min-w-0">
           <SidebarTrigger />
           <div className="flex items-center gap-2">
@@ -20,35 +25,35 @@ export default function Header() {
             <span className="font-semibold truncate">KnowledgeHub</span>
           </div>
         </div>
+
         <div className="flex-1 max-w-xl hidden md:flex">
           <Input
             placeholder="Search knowledge..."
             className="h-9"
           />
         </div>
+
         <div className="flex items-center gap-2">
-          {isAuthenticated ? (
-            <>
-              <span className="text-sm hidden sm:inline">
-                {user?.name || user?.email}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={logout}
-              >
-                Logout
-              </Button>
-            </>
-          ) : (
-            <Button
-              asChild
-              variant="outline"
-              size="sm"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="border border-black/30 size-8">
+                <AvatarFallback className="bg-gradient-to-br from-blue-800 to-blue-600 text-white font-extrabold text-2xl">
+                  {user?.name!.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-52"
+              align="end"
             >
-              <Link href="/admin/login">Login</Link>
-            </Button>
-          )}
+              <DropdownMenuItem
+                onClick={logout}
+                className="text-red-500"
+              >
+                {isAuthenticated ? "Logout" : "Login"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

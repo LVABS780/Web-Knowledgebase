@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -20,9 +20,11 @@ import { BookOpen, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { type LoginForm, loginSchema } from "@/lib/userSchema";
 import { useLogin } from "@/hooks/useLogin";
 import { useAuth } from "../contexts/auth-context";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
   const role = user?.role;
 
   const normalizedRole =
@@ -44,6 +46,12 @@ export default function LoginPage() {
   const { errors } = formState;
   const [showPassword, setShowPassword] = useState(false);
   const mutation = useLogin();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const onSubmit = (values: LoginForm) => {
     mutation.mutate(values);
@@ -90,6 +98,7 @@ export default function LoginPage() {
                       placeholder="Enter your email"
                       className="pl-10 border-2 focus:border-primary transition-colors duration-200 h-12"
                       {...register("email")}
+                      disabled={mutation.isPending}
                     />
                   </div>
                   {errors.email && (
@@ -109,6 +118,7 @@ export default function LoginPage() {
                       placeholder="Enter your password"
                       className="pl-10 pr-12 border-2 focus:border-primary transition-colors duration-200 h-12"
                       {...register("password")}
+                      disabled={mutation.isPending}
                     />
                     <Button
                       type="button"
@@ -116,6 +126,7 @@ export default function LoginPage() {
                       size="sm"
                       onClick={() => setShowPassword((s) => !s)}
                       className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-slate-100"
+                      disabled={mutation.isPending}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4 text-slate-500" />
@@ -144,7 +155,7 @@ export default function LoginPage() {
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">
                     {mutation.error?.message ??
-                      "Login failed. Please try again."}
+                      "Login failed. Please check your credentials and try again."}
                   </p>
                 </div>
               )}

@@ -149,7 +149,7 @@ const CompanyRegistrationSheet = ({
           </span>
         ) : (
           <Button
-            className="bg-blue-600 text-white hover:bg-blue-800 hover:text-white"
+            className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
             variant="outline"
           >
             Register Company
@@ -287,7 +287,7 @@ const CompanyRegistrationSheet = ({
             <Button
               type="button"
               variant="outline"
-              className="bg-blue-600 text-white hover:bg-blue-800 hover:text-white"
+              className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
               onClick={() => setIsRegisterSheetOpen(false)}
               disabled={isSubmitting}
             >
@@ -296,7 +296,7 @@ const CompanyRegistrationSheet = ({
             <Button
               type="button"
               onClick={() => reset()}
-              className="bg-blue-600 text-white hover:bg-blue-800 hover:text-white"
+              className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
               variant="outline"
               disabled={isSubmitting}
             >
@@ -305,7 +305,7 @@ const CompanyRegistrationSheet = ({
             <Button
               variant="outline"
               type="submit"
-              className="bg-blue-600 text-white hover:bg-blue-800 hover:text-white"
+              className="bg-[#6A00B4] text-white hover:bg-blue-800 hover:text-white"
               disabled={isSubmitting}
             >
               {isSubmitting

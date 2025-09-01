@@ -12,6 +12,7 @@ import { JwtPayload, UserType } from "@/types";
 
 type AuthContextType = {
   isAuthenticated: boolean;
+  isLoading: boolean;
   user: UserType | null;
   token: string | null;
   login: (token: string, user: UserType) => void;
@@ -20,11 +21,11 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   const logout = () => {
@@ -61,11 +62,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(JSON.parse(savedUser));
       setIsAuthenticated(true);
     }
+    setIsLoading(false);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, user, token, login, logout }}
+      value={{ isAuthenticated, isLoading, user, token, login, logout }}
     >
       {children}
     </AuthContext.Provider>
