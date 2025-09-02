@@ -65,7 +65,6 @@ const CreateResource = ({
     handleSubmit,
     reset,
     control,
-    watch,
     formState: { errors, isDirty },
   } = useForm<FormSchema>({
     resolver: zodResolver(schema as ZodTypeAny),
@@ -82,8 +81,6 @@ const CreateResource = ({
     control,
     name: "sections",
   });
-
-  const watchedSections = watch("sections");
 
   useEffect(() => {
     if (isRegisterSheetOpen && isEditMode && resourceDetails) {
@@ -140,21 +137,6 @@ const CreateResource = ({
         },
       });
     }
-  };
-
-  const sectionHasContent = (index: number) => {
-    const section = watchedSections?.[index];
-    return section?.subtitle?.trim() || section?.description?.trim();
-  };
-
-  const canDeleteSection = (index: number) => {
-    if (index === 0) {
-      return fields.length > 1 && !sectionHasContent(index);
-    }
-
-    if (sectionHasContent(index)) return false;
-
-    return true;
   };
 
   const isSubmitting = isEditMode ? isUpdating : isCreating;
@@ -271,11 +253,10 @@ const CreateResource = ({
                     )}
                   </div>
 
-                  {canDeleteSection(index) && (
+                  {fields.length > 1 && (
                     <Button
                       type="button"
                       variant="outline"
-                      className=""
                       onClick={() => remove(index)}
                     >
                       <Trash2Icon className="text-green-600" />
@@ -293,7 +274,6 @@ const CreateResource = ({
               </Button>
             </div>
 
-            {/* Resource Status Toggle - Now available for both create and edit */}
             <Controller
               control={control}
               name="isActive"
