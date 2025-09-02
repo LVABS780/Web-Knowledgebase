@@ -39,6 +39,7 @@ export type CreateResourcePayload = {
   title: string;
   description: string;
   sections?: { subtitle?: string; description?: string }[];
+  isActive?: boolean;
 };
 
 export type UpdateResourcePayload = {

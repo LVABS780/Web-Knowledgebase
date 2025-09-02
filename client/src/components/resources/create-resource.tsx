@@ -293,27 +293,28 @@ const CreateResource = ({
               </Button>
             </div>
 
-            {isEditMode && (
-              <Controller
-                control={control}
-                name="isActive"
-                render={({ field }) => (
-                  <label className="space-y-1.5 cursor-pointer">
-                    <Label>Resource Status</Label>
-                    <div className="custom-border shadow-sm flex items-center justify-between p-3 rounded-md cursor-pointer">
-                      <p className="text-sm text-muted-foreground">
-                        Toggle on if you want to publish the resource
-                      </p>
-                      <Switch
-                        checked={Boolean(field.value)}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-[#6A00B4] data-[state=unchecked]:bg-gray-300"
-                      />
-                    </div>
-                  </label>
-                )}
-              />
-            )}
+            {/* Resource Status Toggle - Now available for both create and edit */}
+            <Controller
+              control={control}
+              name="isActive"
+              render={({ field }) => (
+                <label className="space-y-1.5 cursor-pointer">
+                  <Label>Resource Status</Label>
+                  <div className="custom-border shadow-sm flex items-center justify-between p-3 rounded-md cursor-pointer">
+                    <p className="text-sm text-muted-foreground">
+                      {isEditMode
+                        ? "Toggle on if you want to publish the resource"
+                        : "Toggle on to publish the resource immediately after creation"}
+                    </p>
+                    <Switch
+                      checked={Boolean(field.value)}
+                      onCheckedChange={field.onChange}
+                      className="data-[state=checked]:bg-[#6A00B4] data-[state=unchecked]:bg-gray-300"
+                    />
+                  </div>
+                </label>
+              )}
+            />
           </div>
 
           <div className="grid md:grid-cols-3 gap-10 px-10 my-8">

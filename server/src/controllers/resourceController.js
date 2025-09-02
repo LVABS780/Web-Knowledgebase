@@ -15,7 +15,7 @@ exports.createResource = async (req, res) => {
       });
     }
 
-    const { title, description, sections } = req.body;
+    const { title, description, sections, isActive } = req.body;
 
     if (!title || !description) {
       await session.abortTransaction();
@@ -34,6 +34,7 @@ exports.createResource = async (req, res) => {
           ...(Array.isArray(sections) && sections.length > 0
             ? { sections }
             : {}),
+          isActive: isActive !== undefined ? isActive : true,
           createdBy: req.user.id,
           companyId: req.user.companyId,
         },
