@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Editor } from "@tinymce/tinymce-react";
 import {
   resourceCreateSchema,
   resourceUpdateSchema,
@@ -199,10 +199,31 @@ const CreateResource = ({
 
             <div className="space-y-1.5">
               <Label>Resource Description</Label>
-              <Textarea
-                {...register("description")}
-                className="custom-border shadow-sm min-h-[120px] resize-none"
-                placeholder="Enter detailed description of the resource"
+              <Controller
+                control={control}
+                name="description"
+                render={({ field: { value, onChange } }) => (
+                  <Editor
+                    tinymceScriptSrc="/tinymce/tinymce.min.js"
+                    value={value as string}
+                    licenseKey="gpl"
+                    onEditorChange={(content) => onChange(content)}
+                    init={{
+                      base_url: "/tinymce",
+                      suffix: ".min",
+                      promotion: false,
+                      branding: false,
+                      height: 300,
+                      menubar: false,
+                      plugins:
+                        "advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table  wordcount",
+                      toolbar:
+                        "undo redo | blocks | bold italic underline forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code | help",
+                      content_style:
+                        "body { font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,'Apple Color Emoji','Segoe UI Emoji',sans-serif; font-size:14px }",
+                    }}
+                  />
+                )}
               />
               {errors.description && (
                 <p className="text-sm text-red-500">
@@ -241,10 +262,33 @@ const CreateResource = ({
 
                   <div className="space-y-1.5">
                     <Label>Description</Label>
-                    <Textarea
-                      {...register(`sections.${index}.description` as const)}
-                      className="custom-border shadow-sm min-h-[100px] resize-none"
-                      placeholder="Enter section description"
+                    <Controller
+                      control={control}
+                      name={`sections.${index}.description` as const}
+                      render={({ field: { value, onChange } }) => (
+                        <Editor
+                          tinymceScriptSrc="/tinymce/tinymce.min.js"
+                          value={value as string}
+                          licenseKey="gpl"
+                          onEditorChange={(content) => onChange(content)}
+                          init={{
+                            base_url: "/tinymce",
+                            suffix: ".min",
+                            promotion: false,
+                            branding: false,
+                            height: 300,
+                            menubar: false,
+                            plugins:
+                              "advlist autolink lists link charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount",
+                            toolbar:
+                              "undo redo | blocks | bold italic underline forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code | help",
+                            block_formats:
+                              "Paragraph=p; Heading 1=h1; Heading 2=h2; Heading 3=h3",
+                            content_style:
+                              "body { font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,'Apple Color Emoji','Segoe UI Emoji',sans-serif; font-size:14px }",
+                          }}
+                        />
+                      )}
                     />
                     {errors.sections?.[index]?.description && (
                       <p className="text-sm text-red-500">

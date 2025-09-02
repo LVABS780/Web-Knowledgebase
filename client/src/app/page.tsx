@@ -161,7 +161,6 @@ export default function ResourcesPage() {
       <div className="flex justify-end items-center">
         <CreateResource />
       </div>
-
       <Card className="shadow-sm">
         <CardHeader className="flex justify-between items-center">
           <h2 className="text-lg font-semibold">My Resources</h2>
