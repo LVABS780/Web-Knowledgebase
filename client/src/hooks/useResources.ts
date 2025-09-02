@@ -33,7 +33,7 @@ export function useResourceById(
 }
 
 export function useResourcesByCompany(
-  companyId: string | undefined,
+  companyId: string,
   params?: {
     search?: string;
     isActive?: boolean;
