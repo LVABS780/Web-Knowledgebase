@@ -31,7 +31,7 @@ import {
   useUpdateResourceMutation,
   useResourceById,
 } from "@/hooks/useResources";
-import { Edit, FileText, Plus } from "lucide-react";
+import { Edit, FileText, Plus, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "../ui/switch";
 import type { ZodTypeAny } from "zod";
@@ -65,6 +65,7 @@ const CreateResource = ({
     handleSubmit,
     reset,
     control,
+    watch,
     formState: { errors, isDirty },
   } = useForm<FormSchema>({
     resolver: zodResolver(schema as ZodTypeAny),
@@ -72,7 +73,7 @@ const CreateResource = ({
       title: "",
       description: "",
       isActive: true,
-      sections: [],
+      sections: [{ subtitle: "", description: "" }],
       ...(isEditMode && resourceId && { resourceId }),
     } as Partial<FormSchema>,
   });
@@ -82,21 +83,28 @@ const CreateResource = ({
     name: "sections",
   });
 
+  const watchedSections = watch("sections");
+
   useEffect(() => {
     if (isRegisterSheetOpen && isEditMode && resourceDetails) {
+      const sectionsToSet =
+        resourceDetails.sections && resourceDetails.sections.length > 0
+          ? resourceDetails.sections
+          : [{ subtitle: "", description: "" }];
+
       reset({
         resourceId,
         title: resourceDetails.title || "",
         description: resourceDetails.description || "",
         isActive: resourceDetails.isActive,
-        sections: resourceDetails.sections || [],
+        sections: sectionsToSet,
       } as Partial<FormSchema>);
     } else if (!isEditMode) {
       reset({
         title: "",
         description: "",
         isActive: true,
-        sections: [],
+        sections: [{ subtitle: "", description: "" }],
       } as Partial<FormSchema>);
     }
   }, [isRegisterSheetOpen, resourceDetails, reset, isEditMode, resourceId]);
@@ -132,6 +140,21 @@ const CreateResource = ({
         },
       });
     }
+  };
+
+  const sectionHasContent = (index: number) => {
+    const section = watchedSections?.[index];
+    return section?.subtitle?.trim() || section?.description?.trim();
+  };
+
+  const canDeleteSection = (index: number) => {
+    if (index === 0) {
+      return fields.length > 1 && !sectionHasContent(index);
+    }
+
+    if (sectionHasContent(index)) return false;
+
+    return true;
   };
 
   const isSubmitting = isEditMode ? isUpdating : isCreating;
@@ -207,12 +230,18 @@ const CreateResource = ({
             </div>
 
             <div className="space-y-4">
-              <Label>Sections (Optional)</Label>
+              <Label>Sections</Label>
               {fields.map((field, index) => (
                 <div
                   key={field.id}
                   className="border rounded-lg p-4 space-y-3 shadow-sm bg-gray-50"
                 >
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium text-sm text-gray-700">
+                      Section {index + 1}
+                    </h4>
+                  </div>
+
                   <div className="space-y-1.5">
                     <Label>Subtitle</Label>
                     <Input
@@ -227,6 +256,7 @@ const CreateResource = ({
                       </p>
                     )}
                   </div>
+
                   <div className="space-y-1.5">
                     <Label>Description</Label>
                     <Textarea
@@ -240,14 +270,17 @@ const CreateResource = ({
                       </p>
                     )}
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="bg-red-500 text-white hover:bg-red-600"
-                    onClick={() => remove(index)}
-                  >
-                    Remove Section
-                  </Button>
+
+                  {canDeleteSection(index) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className=""
+                      onClick={() => remove(index)}
+                    >
+                      <Trash2Icon className="text-green-600" />
+                    </Button>
+                  )}
                 </div>
               ))}
               <Button
@@ -269,7 +302,7 @@ const CreateResource = ({
                     <Label>Resource Status</Label>
                     <div className="custom-border shadow-sm flex items-center justify-between p-3 rounded-md cursor-pointer">
                       <p className="text-sm text-muted-foreground">
-                        Toggle on if you want to activate the resource
+                        Toggle on if you want to publish the resource
                       </p>
                       <Switch
                         checked={Boolean(field.value)}

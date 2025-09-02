@@ -38,14 +38,14 @@ export type ResourceItem = {
 export type CreateResourcePayload = {
   title: string;
   description: string;
-  sections?: { subtitle: string; description: string }[];
+  sections?: { subtitle?: string; description?: string }[];
 };
 
 export type UpdateResourcePayload = {
   resourceId: string;
   title?: string;
   description?: string;
-  sections?: { subtitle: string; description: string }[];
+  sections?: { subtitle?: string; description?: string }[];
   isActive?: boolean;
 };
 
