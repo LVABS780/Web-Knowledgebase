@@ -7,8 +7,8 @@ const emptyToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
   );
 
 export const sectionSchema = z.object({
-  subtitle: z.string().min(1, "Subtitle is required"),
-  description: z.string().min(1, "Section description is required"),
+  subtitle: z.string().optional(),
+  description: z.string().optional(),
 });
 
 export const resourceCreateSchema = z.object({

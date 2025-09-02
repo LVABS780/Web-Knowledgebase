@@ -15,7 +15,7 @@ exports.createResource = async (req, res) => {
       });
     }
 
-    const { title, description } = req.body;
+    const { title, description, sections } = req.body;
 
     if (!title || !description) {
       await session.abortTransaction();
@@ -31,6 +31,9 @@ exports.createResource = async (req, res) => {
         {
           title,
           description,
+          ...(Array.isArray(sections) && sections.length > 0
+            ? { sections }
+            : {}),
           createdBy: req.user.id,
           companyId: req.user.companyId,
         },
@@ -141,7 +144,7 @@ exports.updateResource = async (req, res) => {
 
   try {
     const { resourceId } = req.params;
-    const { title, description, isActive } = req.body;
+    const { title, description, sections, isActive } = req.body;
 
     if (req.user.role !== "COMPANY_ADMIN") {
       await session.abortTransaction();
@@ -167,6 +170,7 @@ exports.updateResource = async (req, res) => {
 
     if (title !== undefined) resource.title = title;
     if (description !== undefined) resource.description = description;
+    if (sections !== undefined) resource.sections = sections;
     if (isActive !== undefined) resource.isActive = isActive;
 
     await resource.save({ session });
