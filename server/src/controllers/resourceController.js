@@ -32,7 +32,7 @@ exports.createResource = async (req, res) => {
           title,
           description,
           createdBy: req.user.id,
-          companyId: req.user.id,
+          companyId: req.user.companyId,
         },
       ],
       { session }

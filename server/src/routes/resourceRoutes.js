@@ -13,11 +13,10 @@ const {
 router.use(userAuth);
 
 router.post("/", createResource);
+router.get("/company/:companyId", getResourcesByCompany);
 router.get("/", getResources);
 router.get("/:resourceId", getResourceById);
 router.put("/:resourceId", updateResource);
 router.delete("/:resourceId", deleteResource);
-
-router.get("/company/:companyId", getResourcesByCompany);
 
 module.exports = router;
