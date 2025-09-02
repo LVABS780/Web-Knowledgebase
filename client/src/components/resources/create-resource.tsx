@@ -19,7 +19,12 @@ import {
   type ResourceCreateForm,
   type ResourceUpdateForm,
 } from "@/lib/resourceSchema";
-import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  type SubmitHandler,
+  useFieldArray,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useCreateResourceMutation,
@@ -67,8 +72,14 @@ const CreateResource = ({
       title: "",
       description: "",
       isActive: true,
+      sections: [],
       ...(isEditMode && resourceId && { resourceId }),
     } as Partial<FormSchema>,
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "sections",
   });
 
   useEffect(() => {
@@ -78,12 +89,14 @@ const CreateResource = ({
         title: resourceDetails.title || "",
         description: resourceDetails.description || "",
         isActive: resourceDetails.isActive,
+        sections: resourceDetails.sections || [],
       } as Partial<FormSchema>);
     } else if (!isEditMode) {
       reset({
         title: "",
         description: "",
         isActive: true,
+        sections: [],
       } as Partial<FormSchema>);
     }
   }, [isRegisterSheetOpen, resourceDetails, reset, isEditMode, resourceId]);
@@ -178,6 +191,7 @@ const CreateResource = ({
                 <p className="text-sm text-red-500">{errors.title.message}</p>
               )}
             </div>
+
             <div className="space-y-1.5">
               <Label>Resource Description</Label>
               <Textarea
@@ -191,6 +205,61 @@ const CreateResource = ({
                 </p>
               )}
             </div>
+
+            <div className="space-y-4">
+              <Label>Sections (Optional)</Label>
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="border rounded-lg p-4 space-y-3 shadow-sm bg-gray-50"
+                >
+                  <div className="space-y-1.5">
+                    <Label>Subtitle</Label>
+                    <Input
+                      type="text"
+                      {...register(`sections.${index}.subtitle` as const)}
+                      className="custom-border shadow-sm"
+                      placeholder="Enter section subtitle"
+                    />
+                    {errors.sections?.[index]?.subtitle && (
+                      <p className="text-sm text-red-500">
+                        {errors.sections[index]?.subtitle?.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Description</Label>
+                    <Textarea
+                      {...register(`sections.${index}.description` as const)}
+                      className="custom-border shadow-sm min-h-[100px] resize-none"
+                      placeholder="Enter section description"
+                    />
+                    {errors.sections?.[index]?.description && (
+                      <p className="text-sm text-red-500">
+                        {errors.sections[index]?.description?.message}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-red-500 text-white hover:bg-red-600"
+                    onClick={() => remove(index)}
+                  >
+                    Remove Section
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                onClick={() => append({ subtitle: "", description: "" })}
+                className="bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
+                variant="outline"
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add More Section
+              </Button>
+            </div>
+
             {isEditMode && (
               <Controller
                 control={control}
@@ -213,6 +282,7 @@ const CreateResource = ({
               />
             )}
           </div>
+
           <div className="grid md:grid-cols-3 gap-10 px-10 my-8">
             <Button
               type="button"

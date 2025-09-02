@@ -6,9 +6,15 @@ const emptyToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
     schema.optional()
   );
 
+export const sectionSchema = z.object({
+  subtitle: z.string().min(1, "Subtitle is required"),
+  description: z.string().min(1, "Section description is required"),
+});
+
 export const resourceCreateSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
+  sections: z.array(sectionSchema).optional(),
 });
 
 export type ResourceCreateForm = z.infer<typeof resourceCreateSchema>;
@@ -17,6 +23,7 @@ export const resourceUpdateSchema = z.object({
   resourceId: z.string(),
   title: emptyToUndefined(z.string().min(1, "Title is required")),
   description: emptyToUndefined(z.string().min(1, "Description is required")),
+  sections: z.array(sectionSchema).optional(),
   isActive: z.boolean().optional(),
 });
 

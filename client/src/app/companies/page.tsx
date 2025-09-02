@@ -204,15 +204,6 @@ const CompanyPage = () => {
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="p-6 space-y-6">
-        <div className="flex justify-center items-center min-h-64">
-          <div className="text-lg">Loading companies...</div>
-        </div>
-      </div>
-    );
-  }
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-end items-center">
@@ -236,19 +227,27 @@ const CompanyPage = () => {
           </Select>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={filteredCompanies}
-            toolbar={(table) => (
-              <DataTableToolbar
-                table={table}
-                config={{
-                  enableGlobalSearch: true,
-                  enableExport: true,
-                }}
-              />
-            )}
-          />
+          {isLoading ? (
+            <div className="p-6 space-y-6">
+              <div className="flex justify-center items-center min-h-64">
+                <div className="text-lg">Loading companies...</div>
+              </div>
+            </div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredCompanies}
+              toolbar={(table) => (
+                <DataTableToolbar
+                  table={table}
+                  config={{
+                    enableGlobalSearch: true,
+                    enableExport: true,
+                  }}
+                />
+              )}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
