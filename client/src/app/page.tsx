@@ -1,223 +1,173 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ArrowUpDown, Trash2 } from "lucide-react";
-import { DataTable } from "@/components/ui/data-table";
-import { DataTableToolbar } from "@/components/ui/data-table-toolbar";
-import { ColumnDef } from "@tanstack/react-table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import CreateResource from "@/components/resources/create-resource";
-import { useAuth } from "./contexts/auth-context";
-import {
-  useDeleteResourceMutation,
-  useResourcesQuery,
-} from "@/hooks/useResources";
-import { type ResourceItem } from "@/services/resourceService";
-import { toast } from "sonner";
+  // useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useResourceById } from "@/hooks/useResources";
+import { useSearchParams } from "next/navigation";
+import { BookOpen } from "lucide-react";
 
-export default function ResourcesPage() {
-  const { user } = useAuth();
-  const isCompanyAdmin = user?.role === "COMPANY_ADMIN";
+export default function PublicKnowledgeBasePage() {
+  const searchParams = useSearchParams();
+  const selectedId = searchParams.get("r") || undefined;
+  const { data: selected } = useResourceById(selectedId, !!selectedId);
+  const [activeSection, setActiveSection] = useState<string>("title");
 
-  const [selectedResourceType, setSelectedResourceType] =
-    useState<string>("active");
+  const outline = useMemo(() => {
+    if (!selected) return [] as { id: string; label: string }[];
+    const items: { id: string; label: string }[] = [
+      { id: "title", label: selected.title },
+    ];
+    (selected.sections || []).forEach((s, idx) => {
+      if (s.subtitle) items.push({ id: `s-${idx}`, label: s.subtitle });
+    });
+    return items;
+  }, [selected]);
 
-  const { data: resources = [], isLoading } = useResourcesQuery();
-  const { mutate: deleteResource, isPending: isDeleting } =
-    useDeleteResourceMutation();
+  const handleLinkClick = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const contentArea = document.querySelector(".content-scroll-area");
+      if (contentArea) {
+        const elementTop = element.offsetTop;
+        contentArea.scrollTo({
+          top: elementTop - 100,
+          behavior: "smooth",
+        });
+      }
+    }
+  };
 
-  const userScopedResources = useMemo(() => {
-    if (!user?._id) return [] as ResourceItem[];
-    return resources.filter((r) => r.createdBy?._id === user._id);
-  }, [resources, user?._id]);
+  // useEffect(() => {
+  //   const contentArea = document.querySelector(
+  //     ".content-scroll-area"
+  //   ) as HTMLElement | null;
+  //   if (!contentArea) return;
 
-  const filteredResources = useMemo(() => {
-    const list = userScopedResources;
-    if (selectedResourceType === "active")
-      return list.filter((r) => r.isActive);
-    return list.filter((r) => !r.isActive);
-  }, [userScopedResources, selectedResourceType]);
+  //   const handleScroll = () => {
+  //     const scrollPosition = contentArea.scrollTop + 10;
+  //     const ids = outline.map((o) => o.id);
+  //     let current = "title";
+  //     for (const id of ids) {
+  //       const el = document.getElementById(id);
+  //       if (!el) continue;
+  //       if (el.offsetTop <= scrollPosition) {
+  //         current = id;
+  //       } else {
+  //         break;
+  //       }
+  //     }
+  //     setActiveSection(current);
+  //   };
 
-  const columns: ColumnDef<ResourceItem>[] = [
-    {
-      id: "id",
-      accessorFn: (row) => row._id,
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const formattedId = `R${String(row.index + 1).padStart(3, "0")}`;
-        return (
-          <span className={`${!row.original.isActive && "text-red-500"}`}>
-            {formattedId}
-          </span>
-        );
-      },
-    },
-    {
-      id: "title",
-      accessorKey: "title",
-      header: ({ column }) => (
-        <Button
-          className="ml-6"
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <span className={`${!row.original.isActive && "text-red-500"}`}>
-          {row.original.title}
-        </span>
-      ),
-    },
-    {
-      id: "description",
-      accessorKey: "description",
-      header: ({ column }) => (
-        <Button
-          className="ml-6"
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <span
-          // className={`${!row.original.isActive && "text-red-500"}`}
-          dangerouslySetInnerHTML={{ __html: row.original.description }}
-        />
-      ),
-    },
-    {
-      id: "category",
-      accessorKey: "category",
-      header: ({ column }) => (
-        <Button
-          className="ml-6"
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Category
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <span className={`${!row.original.isActive && "text-red-500"}`}>
-          {row.original.categoryName}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "isActive",
-      header: "Status",
-      cell: ({ row }) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${
-            row.original.isActive
-              ? "bg-green-100 text-green-800"
-              : "bg-red-100 text-red-800"
-          }`}
-        >
-          {row.original.isActive ? "Publish" : "Draft"}
-        </span>
-      ),
-    },
-    {
-      id: "action",
-      header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-4">
-          <CreateResource resourceId={row.original._id} />
-          <Trash2
-            className={`cursor-pointer hover:text-red-800 ${
-              isDeleting ? "text-gray-400" : "text-red-600"
-            }`}
-            onClick={() => {
-              if (
-                !isDeleting &&
-                window.confirm("Are you sure you want to delete this resource?")
-              ) {
-                deleteResource(row.original._id, {
-                  onSuccess: () => {
-                    toast.success("Resource deleted successfully!");
-                  },
-                  onError: (error) => {
-                    toast.error("Failed to delete resource. Please try again.");
-                    console.error("Delete resource error:", error);
-                  },
-                });
-              }
-            }}
-          />
-        </div>
-      ),
-      meta: { exportable: false },
-    },
-  ];
-
-  if (!isCompanyAdmin) return null;
+  //   handleScroll();
+  //   contentArea.addEventListener("scroll", handleScroll, { passive: true });
+  //   return () => {
+  //     contentArea.removeEventListener("scroll", handleScroll as EventListener);
+  //   };
+  // }, [outline]);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-end items-center">
-        <CreateResource />
-      </div>
-      <Card className="shadow-sm">
-        <CardHeader className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">My Resources</h2>
-          <Select
-            value={selectedResourceType}
-            onValueChange={(value) => setSelectedResourceType(value)}
-          >
-            <SelectTrigger className="w-auto custom-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">All Resources</SelectItem>
-              <SelectItem value="inactive">Inactive Resources</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="p-6 space-y-6">
-              <div className="flex justify-center items-center min-h-64">
-                <div className="text-lg">Loading resources...</div>
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row">
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 max-w-4xl w-full">
+          <div className="content-scroll-area">
+            {!selected && (
+              <div className="flex flex-col items-center justify-center h-64 text-center">
+                <BookOpen className="h-16 w-16 text-gray-300 mb-4" />
+                <p className="text-gray-500 text-lg">
+                  Select a resource to view details.
+                </p>
               </div>
-            </div>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={filteredResources}
-              toolbar={(table) => (
-                <DataTableToolbar
-                  table={table}
-                  config={{ enableGlobalSearch: true, enableExport: true }}
-                />
-              )}
-            />
-          )}
-        </CardContent>
-      </Card>
+            )}
+
+            {selected && (
+              <article className="prose prose-base sm:prose-lg max-w-none">
+                <header className="mb-8 lg:mb-12">
+                  <h1
+                    id="title"
+                    className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 leading-tight"
+                  >
+                    {selected.title}
+                  </h1>
+                  {selected.description && (
+                    <div className="text-base sm:text-lg text-gray-700 leading-relaxed border-l-4 border-gray-200 pl-4 sm:pl-6 bg-gray-50 p-4 sm:p-6 rounded-r-lg">
+                      <div
+                        dangerouslySetInnerHTML={{
+                          __html: selected.description,
+                        }}
+                      />
+                    </div>
+                  )}
+                </header>
+
+                <div className="space-y-8 lg:space-y-12">
+                  {(selected.sections || []).map((s, idx) => (
+                    <section key={idx}>
+                      {s.subtitle && (
+                        <h2
+                          id={`s-${idx}`}
+                          className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 lg:mb-6 pb-2 border-b border-gray-200"
+                        >
+                          {s.subtitle}
+                        </h2>
+                      )}
+                      {s.description && (
+                        <div className="text-gray-700 leading-relaxed space-y-4">
+                          <div
+                            dangerouslySetInnerHTML={{
+                              __html: s.description,
+                            }}
+                          />
+                        </div>
+                      )}
+                    </section>
+                  ))}
+                </div>
+              </article>
+            )}
+          </div>
+        </main>
+
+        <aside className="w-full lg:w-64 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 mt-6 lg:mt-0 lg:pl-6">
+          <div className="fixed top-40 p-4 sm:p-6">
+            {outline.length > 0 && (
+              <nav>
+                <h3 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+                  On this page
+                </h3>
+                <ul className="space-y-2">
+                  {outline.map((item) => {
+                    const isActive = activeSection === item.id;
+                    const isTitle = item.id === "title";
+
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => handleLinkClick(item.id)}
+                          className={`
+                            block w-full text-left text-sm leading-relaxed py-1 px-2 rounded transition-colors duration-200
+                            ${
+                              isActive
+                                ? "text-blue-600 bg-blue-50 font-medium border-l-2 border-blue-600 pl-3"
+                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                            }
+                            ${isTitle ? "font-medium" : ""}
+                          `}
+                        >
+                          {item.label}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+            )}
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

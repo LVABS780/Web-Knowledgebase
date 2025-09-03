@@ -1,7 +1,7 @@
 "use client";
 
-import { Home, Notebook, Building } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { Home, Notebook, Building, ChevronRight } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,18 +13,20 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/app/contexts/auth-context";
 import { Avatar } from "./ui/avatar";
 import { AvatarFallback } from "@radix-ui/react-avatar";
+import { useResourceById, useResourcesQuery } from "@/hooks/useResources";
 
-const baseItems = [
-  {
-    title: "Knowledge Base",
-    url: "/",
-    icon: Notebook,
-  },
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const baseItems: React.SetStateAction<any[]> = [
+  // {
+  //   title: "Knowledge Base",
+  //   url: "/",
+  //   icon: Notebook,
+  // },
 ];
 
 const authenticatedItems = [
@@ -32,6 +34,11 @@ const authenticatedItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: Home,
+  },
+  {
+    title: "Knowledge Base",
+    url: "/companies/knowledgebase",
+    icon: Notebook,
   },
 ];
 
@@ -48,15 +55,43 @@ const KnowledgeBaseSidebar = () => {
   const { user } = useAuth();
   const role = user?.role;
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { setOpenMobile } = useSidebar();
 
   const [menuItems, setMenuItems] = useState(baseItems);
+  const [expandedResourceId, setExpandedResourceId] = useState<
+    string | undefined
+  >(undefined);
+  const { data: resources } = useResourcesQuery();
+
+  const selectedResourceId = useMemo(
+    () => searchParams.get("r") || undefined,
+    [searchParams]
+  );
+  const { data: selectedResource } = useResourceById(
+    selectedResourceId,
+    !!selectedResourceId
+  );
+  const sections = useMemo(() => {
+    if (!selectedResource) return [] as { id: string; label: string }[];
+    const items: { id: string; label: string }[] = [
+      { id: "title", label: selectedResource.title },
+    ];
+    (selectedResource.sections || []).forEach((s, idx) => {
+      if (s.subtitle) items.push({ id: `s-${idx}`, label: s.subtitle });
+    });
+    return items;
+  }, [selectedResource]);
+
+  useEffect(() => {
+    setExpandedResourceId(selectedResourceId || undefined);
+  }, [selectedResourceId]);
 
   useEffect(() => {
     if (role === "SUPER_ADMIN") {
       setMenuItems(adminItems);
     } else if (user) {
-      setMenuItems([...authenticatedItems, ...baseItems]);
+      setMenuItems([...authenticatedItems]);
     } else {
       setMenuItems(baseItems);
     }
@@ -101,13 +136,83 @@ const KnowledgeBaseSidebar = () => {
                 >
                   <Link href={item.url}>
                     <item.icon className="text-indigo-950 dark:text-white" />
-                    <span>{item.title}</span>
+                    <span className="flex-1 text-left">{item.title}</span>
+                    <ChevronRight className="ml-auto opacity-60" />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarGroup>
+
+        {pathname === "/" && (
+          <SidebarGroup>
+            <SidebarMenu>
+              {(resources || []).map((r) => {
+                const href = `${pathname}?r=${r._id}`;
+                const isActive = selectedResourceId === r._id;
+                const isExpanded = expandedResourceId === r._id;
+                return (
+                  <React.Fragment key={r._id}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        className={
+                          isActive
+                            ? "bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
+                            : ""
+                        }
+                        onClick={() => setOpenMobile(false)}
+                      >
+                        <Link
+                          href={href}
+                          onClick={() =>
+                            setExpandedResourceId((prev) =>
+                              prev === r._id ? undefined : r._id
+                            )
+                          }
+                        >
+                          <span className="flex-1 text-left">{r.title}</span>
+                          <ChevronRight
+                            className={`ml-auto opacity-60 transition-transform ${
+                              isExpanded ? "rotate-90" : "rotate-0"
+                            }`}
+                          />
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    {isExpanded &&
+                      selectedResource &&
+                      selectedResource._id === r._id &&
+                      sections.length > 0 && (
+                        <div className="ml-6">
+                          <SidebarMenu>
+                            {sections.map((s) => (
+                              <SidebarMenuItem key={s.id}>
+                                <SidebarMenuButton
+                                  asChild
+                                  onClick={() => setOpenMobile(false)}
+                                >
+                                  <Link
+                                    href={`/?r=${selectedResource._id}#${s.id}`}
+                                  >
+                                    <span className="flex-1 text-left text-sm">
+                                      {s.label}
+                                    </span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        </div>
+                      )}
+                  </React.Fragment>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="shadow-md bg-white dark:bg-black" />

@@ -87,26 +87,7 @@ export default function ResourcesPage() {
         </span>
       ),
     },
-    {
-      id: "description",
-      accessorKey: "description",
-      header: ({ column }) => (
-        <Button
-          className="ml-6"
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <span
-          // className={`${!row.original.isActive && "text-red-500"}`}
-          dangerouslySetInnerHTML={{ __html: row.original.description }}
-        />
-      ),
-    },
+
     {
       id: "category",
       accessorKey: "category",
