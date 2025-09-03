@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const Resource = require("../models/resource");
+const { Resource, ResourceCategory } = require("../models/resource");
 
 exports.createResource = async (req, res) => {
   const session = await mongoose.startSession();
@@ -15,7 +15,8 @@ exports.createResource = async (req, res) => {
       });
     }
 
-    const { title, description, sections, isActive } = req.body;
+    const { title, description, sections, isActive, categoryId, categoryName } =
+      req.body;
 
     if (!title || !description) {
       await session.abortTransaction();
@@ -26,6 +27,25 @@ exports.createResource = async (req, res) => {
       });
     }
 
+    let finalCategoryId = categoryId;
+
+    if (!categoryId && categoryName) {
+      let category = await ResourceCategory.findOne({
+        name: categoryName,
+        companyId: req.user.companyId,
+      }).session(session);
+
+      if (!category) {
+        category = await ResourceCategory.create(
+          [{ name: categoryName, companyId: req.user.companyId }],
+          { session }
+        );
+        finalCategoryId = category[0]._id;
+      } else {
+        finalCategoryId = category._id;
+      }
+    }
+
     const resource = await Resource.create(
       [
         {
@@ -34,6 +54,7 @@ exports.createResource = async (req, res) => {
           ...(Array.isArray(sections) && sections.length > 0
             ? { sections }
             : {}),
+          ...(finalCategoryId ? { categoryId: finalCategoryId } : {}),
           isActive: isActive !== undefined ? isActive : true,
           createdBy: req.user.id,
           companyId: req.user.companyId,
@@ -84,6 +105,7 @@ exports.getResources = async (req, res) => {
     const resources = await Resource.find(query)
       .populate("createdBy", "name email")
       .populate("companyId", "name")
+      .populate("categoryId", "name")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -119,6 +141,7 @@ exports.getResourceById = async (req, res) => {
     const resource = await Resource.findOne(query)
       .populate("createdBy", "name email")
       .populate("companyId", "name")
+      .populate("categoryId", "name")
       .lean();
 
     if (!resource) {
@@ -138,14 +161,14 @@ exports.getResourceById = async (req, res) => {
       .json({ success: false, message: "Failed to fetch resource" });
   }
 };
-
 exports.updateResource = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const { resourceId } = req.params;
-    const { title, description, sections, isActive } = req.body;
+    const { title, description, sections, isActive, categoryId, categoryName } =
+      req.body;
 
     if (req.user.role !== "COMPANY_ADMIN") {
       await session.abortTransaction();
@@ -174,11 +197,31 @@ exports.updateResource = async (req, res) => {
     if (sections !== undefined) resource.sections = sections;
     if (isActive !== undefined) resource.isActive = isActive;
 
+    if (categoryId) {
+      resource.categoryId = categoryId;
+    } else if (categoryName) {
+      let category = await ResourceCategory.findOne({
+        name: categoryName,
+        companyId: req.user.companyId,
+      }).session(session);
+
+      if (!category) {
+        category = await ResourceCategory.create(
+          [{ name: categoryName, companyId: req.user.companyId }],
+          { session }
+        );
+        resource.categoryId = category[0]._id;
+      } else {
+        resource.categoryId = category._id;
+      }
+    }
+
     await resource.save({ session });
 
     const updatedResource = await Resource.findById(resourceId)
       .populate("createdBy", "name email")
       .populate("companyId", "name")
+      .populate("categoryId", "name")
       .lean()
       .session(session);
 
@@ -266,6 +309,7 @@ exports.getResourcesByCompany = async (req, res) => {
     const resources = await Resource.find(query)
       .populate("createdBy", "name email")
       .populate("companyId", "name")
+      .populate("categoryId", "name")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -278,5 +322,31 @@ exports.getResourcesByCompany = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Failed to fetch resources" });
+  }
+};
+
+exports.getCategoriesByCompany = async (req, res) => {
+  try {
+    const { search } = req.query;
+    const companyId = req.user.companyId;
+
+    let query = { companyId };
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    const categories = await ResourceCategory.find(query)
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      data: categories,
+    });
+  } catch (error) {
+    console.error("Get categories by company error:", error.message);
+    return res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch categories" });
   }
 };
