@@ -87,12 +87,16 @@ exports.getResources = async (req, res) => {
 
     let query = {};
 
-    if (req.user.role === "COMPANY_ADMIN") {
+    if (req.user && req.user.role === "COMPANY_ADMIN") {
       query.companyId = req.user.companyId;
     }
 
     if (isActive !== undefined) {
       query.isActive = isActive === "true";
+    }
+
+    if (!req.user) {
+      query.isActive = true;
     }
 
     if (search) {
@@ -134,8 +138,12 @@ exports.getResourceById = async (req, res) => {
 
     let query = { _id: resourceId };
 
-    if (req.user.role === "COMPANY_ADMIN") {
+    if (req.user && req.user.role === "COMPANY_ADMIN") {
       query.companyId = req.user.companyId;
+    }
+
+    if (!req.user) {
+      query.isActive = true;
     }
 
     const resource = await Resource.findOne(query)
