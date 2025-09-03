@@ -101,8 +101,28 @@ export default function ResourcesPage() {
         </Button>
       ),
       cell: ({ row }) => (
+        <span
+          // className={`${!row.original.isActive && "text-red-500"}`}
+          dangerouslySetInnerHTML={{ __html: row.original.description }}
+        />
+      ),
+    },
+    {
+      id: "category",
+      accessorKey: "category",
+      header: ({ column }) => (
+        <Button
+          className="ml-6"
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Category
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => (
         <span className={`${!row.original.isActive && "text-red-500"}`}>
-          {row.original.description}
+          {row.original.categoryName}
         </span>
       ),
     },

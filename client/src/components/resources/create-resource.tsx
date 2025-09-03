@@ -67,7 +67,8 @@ const CreateResource = ({
   const { mutate: updateResource, isPending: isUpdating } =
     useUpdateResourceMutation();
 
-  const { data: categories = [] } = useResourceCategories();
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useResourceCategories();
 
   const schema = isEditMode ? resourceUpdateSchema : resourceCreateSchema;
 
@@ -105,6 +106,17 @@ const CreateResource = ({
       setValue("categoryName", "");
     }
   }, [categoryId, setValue]);
+
+  useEffect(() => {
+    if (!isEditMode) {
+      if (categories.length === 0) {
+        setValue("categoryId", "OTHER");
+      } else if (!categoryId) {
+        setValue("categoryId", categories[0]._id);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, isEditMode]);
 
   useEffect(() => {
     if (isRegisterSheetOpen && isEditMode && resourceDetails) {
@@ -331,13 +343,26 @@ const CreateResource = ({
                   render={({ field }) => (
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value}
+                      value={field.value as string}
                     >
                       <SelectTrigger className="w-full custom-border">
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue
+                          placeholder={
+                            isLoadingCategories
+                              ? "Loading categories..."
+                              : "Select category"
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.length === 0 ? (
+                        {isLoadingCategories ? (
+                          <SelectItem
+                            value={categoryId || ""}
+                            disabled
+                          >
+                            Loading categories...
+                          </SelectItem>
+                        ) : categories.length === 0 ? (
                           <SelectItem value="OTHER">
                             Add New Category
                           </SelectItem>

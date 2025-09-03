@@ -9,6 +9,8 @@ import {
   CreateResourcePayload,
   UpdateResourcePayload,
   ResourceItem,
+  fetchCategories,
+  type ResourceCategory,
 } from "@/services/resourceService";
 
 export function useResourcesQuery(params?: {
@@ -77,5 +79,12 @@ export function useDeleteResourceMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resources"] });
     },
+  });
+}
+
+export function useResourceCategories() {
+  return useQuery<ResourceCategory[]>({
+    queryKey: ["resource", "categories"],
+    queryFn: () => fetchCategories(),
   });
 }
