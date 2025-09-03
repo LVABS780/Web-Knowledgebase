@@ -4,6 +4,8 @@ export type Resource = {
   _id: string;
   title: string;
   description: string;
+  categoryId?: string;
+  categoryName?: string;
   sections?: { subtitle: string; description: string }[];
   createdBy: string;
   companyId: string;
@@ -27,6 +29,8 @@ export type ResourceItem = {
   _id: string;
   title: string;
   description: string;
+  categoryId?: string;
+  categoryName?: string;
   sections?: { subtitle: string; description: string }[];
   createdBy: ResourceCreator;
   companyId: ResourceCompany;
@@ -35,9 +39,16 @@ export type ResourceItem = {
   updatedAt: string;
 };
 
+type ApiResourceItem = Omit<ResourceItem, "categoryId" | "categoryName"> & {
+  categoryId?: string | { _id: string; name: string };
+  categoryName?: string;
+};
+
 export type CreateResourcePayload = {
   title: string;
   description: string;
+  categoryId?: string;
+  categoryName?: string;
   sections?: { subtitle?: string; description?: string }[];
   isActive?: boolean;
 };
@@ -46,6 +57,8 @@ export type UpdateResourcePayload = {
   resourceId: string;
   title?: string;
   description?: string;
+  categoryId?: string;
+  categoryName?: string;
   sections?: { subtitle?: string; description?: string }[];
   isActive?: boolean;
 };
@@ -63,14 +76,36 @@ export async function fetchResources(params?: {
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
   const res = await API.get(url);
-  return res.data.data as ResourceItem[];
+  const data = res.data.data as ApiResourceItem[];
+  return data.map((item) => ({
+    ...item,
+    categoryId:
+      typeof item.categoryId === "object"
+        ? item.categoryId?._id
+        : item.categoryId,
+    categoryName:
+      typeof item.categoryId === "object"
+        ? item.categoryId?.name
+        : item.categoryName,
+  }));
 }
 
 export async function fetchResourceById(
   resourceId: string
 ): Promise<ResourceItem> {
   const res = await API.get(`/resource/${resourceId}`);
-  return res.data.data as ResourceItem;
+  const item = res.data.data as ApiResourceItem;
+  return {
+    ...item,
+    categoryId:
+      typeof item.categoryId === "object"
+        ? item.categoryId?._id
+        : item.categoryId,
+    categoryName:
+      typeof item.categoryId === "object"
+        ? item.categoryId?.name
+        : item.categoryName,
+  } as ResourceItem;
 }
 
 export async function createResource(payload: CreateResourcePayload) {
@@ -105,5 +140,28 @@ export async function fetchResourcesByCompany(
     queryParams.toString() ? `?${queryParams.toString()}` : ""
   }`;
   const res = await API.get(url);
-  return res.data.data as ResourceItem[];
+  const data = res.data.data as ApiResourceItem[];
+  return data.map((item) => ({
+    ...item,
+    categoryId:
+      typeof item.categoryId === "object"
+        ? item.categoryId?._id
+        : item.categoryId,
+    categoryName:
+      typeof item.categoryId === "object"
+        ? item.categoryId?.name
+        : item.categoryName,
+  }));
+}
+
+export type ResourceCategory = { _id: string; name: string };
+
+export async function fetchCategories(params?: { search?: string }) {
+  const queryParams = new URLSearchParams();
+  if (params?.search) queryParams.append("search", params.search);
+  const url = `/resource/categories${
+    queryParams.toString() ? `?${queryParams.toString()}` : ""
+  }`;
+  const res = await API.get(url);
+  return res.data.data as ResourceCategory[];
 }
