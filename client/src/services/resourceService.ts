@@ -99,7 +99,7 @@ export async function fetchResourceById(
     ...item,
     categoryId:
       typeof item.categoryId === "object"
-        ? item.categoryId?._id
+        ? item.categoryId._id
         : item.categoryId,
     categoryName:
       typeof item.categoryId === "object"
