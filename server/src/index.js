@@ -6,6 +6,7 @@ require("dotenv").config({ quiet: true });
 const authRouter = require("./routes/authRoutes");
 const companyRouter = require("./routes/companyRoutes");
 const resourceRouter = require("./routes/resourceRoutes");
+const connectRouter = require("./routes/connectRoute");
 
 const app = express();
 const PORT = process.env.PORT;
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use("/api", authRouter);
 app.use("/api/company", companyRouter);
 app.use("/api/resource", resourceRouter);
+app.use("/api/connect", connectRouter);
 
 connectDB()
   .then(() => {
