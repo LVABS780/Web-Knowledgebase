@@ -9,7 +9,7 @@ import {
 export function useCreateLetsConnectMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: CreateLetsConnectPayload) =>
+    mutationFn: (payload: CreateLetsConnectPayload & { companyId: string }) =>
       createLetsConnect(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["letsConnect"] });

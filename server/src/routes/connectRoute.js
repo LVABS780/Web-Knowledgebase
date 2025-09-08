@@ -6,7 +6,7 @@ const {
 
 const router = express.Router();
 
-router.post("/", createLetsConnect);
+router.post("/:companyId", createLetsConnect);
 router.get("/", getLetsConnect);
 
 module.exports = router;

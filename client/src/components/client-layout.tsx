@@ -1,12 +1,10 @@
 "use client";
 
-// import { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import Header from "@/components/header";
 import KnowledgeBaseSidebar from "./sidemenu";
-// import { useAuth } from "@/app/contexts/auth-context";
-// import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import LetsConnectRegistrationSheet from "./connect-registeration";
 import { useAuth } from "@/app/contexts/auth-context";
 
@@ -16,8 +14,21 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const hideLayout = pathname === "/login";
   const { isAuthenticated } = useAuth();
+
+  const companyId = useMemo(() => {
+    const fromQuery = searchParams?.get("companyId");
+    if (fromQuery && /^[0-9a-fA-F]{24}$/.test(fromQuery)) return fromQuery;
+
+    if (!pathname) return undefined;
+    const segments = pathname.split("/").filter(Boolean);
+    const last = segments[segments.length - 1];
+    if (last && /^[0-9a-fA-F]{24}$/.test(last)) return last;
+
+    return undefined;
+  }, [pathname, searchParams]);
 
   if (hideLayout) {
     return <>{children}</>;
@@ -32,7 +43,7 @@ export default function ClientLayout({
 
         {!isAuthenticated && (
           <div className="fixed bottom-6 right-6 z-50 ">
-            <LetsConnectRegistrationSheet />
+            <LetsConnectRegistrationSheet companyId={companyId} />
           </div>
         )}
       </SidebarInset>

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { LetsConnect } = require("../models/let-connect");
+const { LetsConnect } = require("../models/connect");
 
 exports.createLetsConnect = async (req, res) => {
   const session = await mongoose.startSession();
@@ -7,6 +7,15 @@ exports.createLetsConnect = async (req, res) => {
 
   try {
     const { name, email, phone, services } = req.body;
+    const companyId = req.params.companyId;
+
+    if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid or missing companyId" });
+    }
 
     if (!name || !email || !services || services.length === 0) {
       await session.abortTransaction();
@@ -17,17 +26,20 @@ exports.createLetsConnect = async (req, res) => {
     }
 
     const orClauses = [{ email }];
-    if (phone) {
-      orClauses.push({ phone });
-    }
+    if (phone) orClauses.push({ phone });
 
-    const existingEntry = await LetsConnect.findOne({ $or: orClauses }).lean();
+    const existingEntry = await LetsConnect.findOne({
+      companyId,
+      $or: orClauses,
+    }).lean();
+
     if (existingEntry) {
       await session.abortTransaction();
       session.endSession();
-      return res
-        .status(400)
-        .json({ success: false, message: "Email or phone already exists" });
+      return res.status(400).json({
+        success: false,
+        message: "Email or phone already exists for this company",
+      });
     }
 
     const newEntryArr = await LetsConnect.create(
@@ -36,6 +48,7 @@ exports.createLetsConnect = async (req, res) => {
           name,
           email,
           ...(phone ? { phone } : {}),
+          companyId,
           services,
         },
       ],

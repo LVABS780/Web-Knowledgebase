@@ -30,7 +30,11 @@ const servicesOptions = [
   "Data Analytics",
 ];
 
-export default function LetsConnectRegistrationSheet() {
+type Props = {
+  companyId?: string; // optional — parent can pass explicitly
+};
+
+export default function LetsConnectRegistrationSheet({ companyId }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const { mutateAsync: createLetsConnect, isPending } =
@@ -48,8 +52,13 @@ export default function LetsConnectRegistrationSheet() {
   });
 
   const onSubmit = async (data: LetsConnectCreateForm) => {
+    if (!companyId) {
+      toast.error("Unable to submit — company not found.");
+      return;
+    }
+
     try {
-      await createLetsConnect(data);
+      await createLetsConnect({ ...data, companyId });
       toast.success("Thanks! We'll reach out soon.");
       reset({ name: "", email: "", phone: "", services: [] });
       setIsOpen(false);
@@ -84,6 +93,13 @@ export default function LetsConnectRegistrationSheet() {
             Share a few details and the services you&apos;re interested in.
             We&apos;ll get back to you shortly.
           </SheetDescription>
+
+          {!companyId && (
+            <p className="mt-2 text-sm text-yellow-600">
+              This form requires a company context. Please open this from a
+              company page.
+            </p>
+          )}
         </SheetHeader>
 
         <form
@@ -186,6 +202,7 @@ export default function LetsConnectRegistrationSheet() {
             <Button
               type="submit"
               className="bg-[#6A00B4] text-white hover:bg-[#7f04d4]"
+              disabled={isPending || !companyId} // disable if no companyId
             >
               {isPending ? "Submitting..." : "Submit"}
             </Button>

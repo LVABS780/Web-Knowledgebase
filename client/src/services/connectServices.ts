@@ -22,7 +22,10 @@ export async function fetchLetsConnect(): Promise<LetsConnect[]> {
   return res.data.data as LetsConnect[];
 }
 
-export async function createLetsConnect(payload: CreateLetsConnectPayload) {
-  const res = await API.post("/connect", payload);
+export async function createLetsConnect(
+  payload: CreateLetsConnectPayload & { companyId: string }
+) {
+  const { companyId, ...body } = payload;
+  const res = await API.post(`/connect/${companyId}`, body);
   return res.data;
 }

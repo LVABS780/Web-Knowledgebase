@@ -13,6 +13,10 @@ const letsConnectSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
     phone: {
       type: String,
       match: [/^\d{10}$/, "Phone number must be 10 digits"],
