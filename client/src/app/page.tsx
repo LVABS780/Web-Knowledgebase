@@ -104,8 +104,13 @@ export default function PublicKnowledgeBasePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row">
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 max-w-4xl w-full">
+      <div className="max-w-7xl flex flex-col lg:flex-row">
+        <main
+          className="flex-1 px-4 sm:px-6 lg:px-8
+          py-8
+        lg:py-12
+         max-w-6xl"
+        >
           <div
             ref={contentRef}
             className="content-scroll-area overflow-auto max-h-[calc(100vh-8rem)]"
@@ -121,9 +126,21 @@ export default function PublicKnowledgeBasePage() {
             )}
 
             {selected && (
-              <article className="prose prose-base sm:prose-lg max-w-none">
+              <article className="prose prose-base sm:prose-lg max-w-5xl flex flex-col flex-wrap">
                 <div className="mb-6">
                   <Breadcrumb className="text-sm">
+                    <BreadcrumbItem>
+                      <button
+                        onClick={() => {
+                          window.history.replaceState(null, "", `#title`);
+                          handleLinkClick("title");
+                        }}
+                        className="inline-flex items-center gap-2"
+                      >
+                        {selected.categoryName}
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      </button>
+                    </BreadcrumbItem>
                     <BreadcrumbItem>
                       <button
                         onClick={() => {
@@ -201,9 +218,8 @@ export default function PublicKnowledgeBasePage() {
             )}
           </div>
         </main>
-
-        <aside className="hidden lg:block w-full lg:w-64 flex-shrink-0 lg:border-l border-gray-200 mt-6 lg:mt-0 lg:pl-6 lg:fixed lg:top-40 lg:right-40">
-          <div className="p-4 sm:p-6">
+        <aside className="hidden lg:flex flex-col justify-between min-h-[calc(100vh-2rem)]  bg-zinc-100 w-full md:w-80 flex-shrink-0 lg:border-l border-gray-200 mt-6 lg:mt-0 lg:pl-6 md:fixed md:top-10 md:right-0">
+          <div className="mt-20 sm:p-6 overflow-y-auto ">
             {outline.length > 0 && (
               <nav>
                 <h3 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
@@ -225,15 +241,13 @@ export default function PublicKnowledgeBasePage() {
                             );
                             handleLinkClick(item.id);
                           }}
-                          className={`
-                    block w-full text-left text-sm leading-relaxed py-1 px-2 rounded transition-colors duration-200
+                          className={`block w-full text-left text-sm leading-relaxed py-1 px-2 rounded transition-colors duration-200
                     ${
                       isActive
                         ? "text-blue-600 bg-blue-50 font-medium border-l-2 border-blue-600 pl-3"
                         : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                     }
-                    ${isTitle ? "font-medium" : ""}
-                  `}
+                    ${isTitle ? "font-medium" : ""}`}
                         >
                           {item.label}
                         </button>
