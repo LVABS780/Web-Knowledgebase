@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -12,10 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useForm, Controller, type SubmitHandler } from "react-hook-form";
-import { z } from "zod";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+
+import {
+  letsConnectCreateSchema,
+  type LetsConnectCreateForm,
+} from "../lib/connectSchema";
+import { useCreateLetsConnectMutation } from "../hooks/useConnect";
 
 const servicesOptions = [
   "Web Development",
@@ -25,56 +30,32 @@ const servicesOptions = [
   "Data Analytics",
 ];
 
-const letsConnectSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z
-    .string()
-    .regex(/^\d{10}$/, "Phone must be 10 digits")
-    .optional()
-    .or(z.literal("")),
-  services: z.array(z.string()).min(1, "Select at least one service"),
-});
-
-type LetsConnectForm = z.infer<typeof letsConnectSchema>;
-
-const mockDefaults: Partial<LetsConnectForm> = {
-  name: "Jane Doe",
-  email: "jane.doe@example.com",
-  phone: "9876543210",
-  services: [servicesOptions[0], servicesOptions[2]],
-};
-
-export default function LetsConnectRegistrationSheet({
-  useMockData = true,
-}: {
-  useMockData?: boolean;
-}) {
+export default function LetsConnectRegistrationSheet() {
   const [isOpen, setIsOpen] = useState(false);
+
+  const { mutateAsync: createLetsConnect, isPending } =
+    useCreateLetsConnectMutation();
 
   const {
     register,
     handleSubmit,
     reset,
     control,
-    formState: { errors, isSubmitting },
-  } = useForm<LetsConnectForm>({
-    resolver: zodResolver(letsConnectSchema),
-    defaultValues: useMockData ? (mockDefaults as LetsConnectForm) : undefined,
+    formState: { errors },
+  } = useForm<LetsConnectCreateForm>({
+    resolver: zodResolver(letsConnectCreateSchema),
+    defaultValues: { name: "", email: "", phone: "", services: [] },
   });
 
-  useEffect(() => {
-    if (!isOpen) return;
-    if (!useMockData) {
+  const onSubmit = async (data: LetsConnectCreateForm) => {
+    try {
+      await createLetsConnect(data);
+      toast.success("Thanks! We'll reach out soon.");
       reset({ name: "", email: "", phone: "", services: [] });
+      setIsOpen(false);
+    } catch (err) {
+      toast.error("Something went wrong. Please try again.");
     }
-  }, [isOpen, reset, useMockData]);
-
-  const onSubmit: SubmitHandler<LetsConnectForm> = (data) => {
-    console.log("[Mock] Let's Connect submission:", data);
-    toast.success("Thanks! We'll reach out soon.");
-    reset({ name: "", email: "", phone: "", services: [] });
-    setIsOpen(false);
   };
 
   return (
@@ -111,7 +92,7 @@ export default function LetsConnectRegistrationSheet({
         >
           <div className="space-y-1.5">
             <Label>
-              Name <span className="text-red-500 ml-1">*</span>
+              Name <span className="text-red-500">*</span>
             </Label>
             <Input
               type="text"
@@ -125,7 +106,7 @@ export default function LetsConnectRegistrationSheet({
 
           <div className="space-y-1.5">
             <Label>
-              Email <span className="text-red-500 ml-1">*</span>
+              Email <span className="text-red-500">*</span>
             </Label>
             <Input
               type="email"
@@ -151,9 +132,8 @@ export default function LetsConnectRegistrationSheet({
 
           <div className="space-y-1.5">
             <Label>
-              Services <span className="text-red-500 ml-1">*</span>
+              Services <span className="text-red-500">*</span>
             </Label>
-
             <Controller
               name="services"
               control={control}
@@ -197,18 +177,17 @@ export default function LetsConnectRegistrationSheet({
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                reset({ name: "", email: "", phone: "", services: [] });
-              }}
+              onClick={() =>
+                reset({ name: "", email: "", phone: "", services: [] })
+              }
             >
               Clear
             </Button>
-
             <Button
               type="submit"
               className="bg-[#6A00B4] text-white hover:bg-[#7f04d4]"
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
+              {isPending ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </form>
