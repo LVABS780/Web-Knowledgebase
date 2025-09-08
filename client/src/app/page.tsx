@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  // useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useResourceById } from "@/hooks/useResources";
 import { useSearchParams } from "next/navigation";
 import { BookOpen } from "lucide-react";
@@ -13,6 +9,7 @@ export default function PublicKnowledgeBasePage() {
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("r") || undefined;
   const { data: selected } = useResourceById(selectedId, !!selectedId);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const [activeSection, setActiveSection] = useState<string>("title");
 
   const outline = useMemo(() => {
@@ -26,54 +23,83 @@ export default function PublicKnowledgeBasePage() {
     return items;
   }, [selected]);
 
-  const handleLinkClick = (id: string) => {
+  const handleLinkClick = useCallback((id: string) => {
+    const content = contentRef.current;
     const element = document.getElementById(id);
-    if (element) {
-      const contentArea = document.querySelector(".content-scroll-area");
-      if (contentArea) {
-        const elementTop = element.offsetTop;
-        contentArea.scrollTo({
-          top: elementTop - 100,
-          behavior: "smooth",
-        });
-      }
+    if (!content || !element) return;
+
+    const contentRect = content.getBoundingClientRect();
+    const elRect = element.getBoundingClientRect();
+
+    const offset = elRect.top - contentRect.top + content.scrollTop - 12;
+
+    content.scrollTo({ top: offset, behavior: "smooth" });
+    setActiveSection(id);
+  }, []);
+
+  useEffect(() => {
+    const onKbScroll = (e: Event) => {
+      const detail = (e as CustomEvent)?.detail;
+      if (detail) handleLinkClick(detail as string);
+    };
+    window.addEventListener("kb-scroll-to", onKbScroll as EventListener);
+    return () =>
+      window.removeEventListener("kb-scroll-to", onKbScroll as EventListener);
+  }, [handleLinkClick]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const hash = window.location.hash?.replace("#", "");
+    if (hash) {
+      requestAnimationFrame(() => handleLinkClick(hash));
+    } else {
+      contentRef.current?.scrollTo({ top: 0 });
+      setActiveSection("title");
     }
-  };
+  }, [selected, handleLinkClick]);
 
-  // useEffect(() => {
-  //   const contentArea = document.querySelector(
-  //     ".content-scroll-area"
-  //   ) as HTMLElement | null;
-  //   if (!contentArea) return;
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    let raf = 0;
 
-  //   const handleScroll = () => {
-  //     const scrollPosition = contentArea.scrollTop + 10;
-  //     const ids = outline.map((o) => o.id);
-  //     let current = "title";
-  //     for (const id of ids) {
-  //       const el = document.getElementById(id);
-  //       if (!el) continue;
-  //       if (el.offsetTop <= scrollPosition) {
-  //         current = id;
-  //       } else {
-  //         break;
-  //       }
-  //     }
-  //     setActiveSection(current);
-  //   };
+    const onScroll = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const contentRect = content.getBoundingClientRect();
+        let current = "title";
+        for (const item of outline) {
+          const el = document.getElementById(item.id);
+          if (!el) continue;
+          const elRect = el.getBoundingClientRect();
+          if (elRect.top - contentRect.top <= 60) {
+            current = item.id;
+          } else {
+            break;
+          }
+        }
+        setActiveSection(current);
+      });
+    };
 
-  //   handleScroll();
-  //   contentArea.addEventListener("scroll", handleScroll, { passive: true });
-  //   return () => {
-  //     contentArea.removeEventListener("scroll", handleScroll as EventListener);
-  //   };
-  // }, [outline]);
+    content.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      content.removeEventListener("scroll", onScroll as EventListener);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [outline]);
 
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row">
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 lg:py-12 max-w-4xl w-full">
-          <div className="content-scroll-area">
+          <div
+            ref={contentRef}
+            className="content-scroll-area overflow-auto max-h-[calc(100vh-8rem)]"
+            style={{ scrollBehavior: "smooth" }}
+          >
             {!selected && (
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 <BookOpen className="h-16 w-16 text-gray-300 mb-4" />
@@ -117,9 +143,7 @@ export default function PublicKnowledgeBasePage() {
                       {s.description && (
                         <div className="text-gray-700 leading-relaxed space-y-4">
                           <div
-                            dangerouslySetInnerHTML={{
-                              __html: s.description,
-                            }}
+                            dangerouslySetInnerHTML={{ __html: s.description }}
                           />
                         </div>
                       )}
@@ -130,9 +154,8 @@ export default function PublicKnowledgeBasePage() {
             )}
           </div>
         </main>
-
-        <aside className="w-full lg:w-64 flex-shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 mt-6 lg:mt-0 lg:pl-6">
-          <div className="fixed top-40 p-4 sm:p-6">
+        <aside className="hidden lg:block w-full lg:w-64 flex-shrink-0 lg:border-l border-gray-200 mt-6 lg:mt-0 lg:pl-6 lg:fixed lg:top-40 lg:right-40">
+          <div className="p-4 sm:p-6">
             {outline.length > 0 && (
               <nav>
                 <h3 className="text-sm font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
@@ -146,16 +169,23 @@ export default function PublicKnowledgeBasePage() {
                     return (
                       <li key={item.id}>
                         <button
-                          onClick={() => handleLinkClick(item.id)}
+                          onClick={() => {
+                            window.history.replaceState(
+                              null,
+                              "",
+                              `#${item.id}`
+                            );
+                            handleLinkClick(item.id);
+                          }}
                           className={`
-                            block w-full text-left text-sm leading-relaxed py-1 px-2 rounded transition-colors duration-200
-                            ${
-                              isActive
-                                ? "text-blue-600 bg-blue-50 font-medium border-l-2 border-blue-600 pl-3"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                            }
-                            ${isTitle ? "font-medium" : ""}
-                          `}
+                    block w-full text-left text-sm leading-relaxed py-1 px-2 rounded transition-colors duration-200
+                    ${
+                      isActive
+                        ? "text-blue-600 bg-blue-50 font-medium border-l-2 border-blue-600 pl-3"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }
+                    ${isTitle ? "font-medium" : ""}
+                  `}
                         >
                           {item.label}
                         </button>

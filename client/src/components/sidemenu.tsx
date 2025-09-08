@@ -1,6 +1,7 @@
+// KnowledgeBaseSidebar.tsx
 "use client";
 
-import { Home, Notebook, Building, ChevronRight } from "lucide-react";
+import { Home, Notebook, Building, ChevronRight, Dot } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Sidebar,
@@ -21,13 +22,7 @@ import { AvatarFallback } from "@radix-ui/react-avatar";
 import { useResourceById, useResourcesQuery } from "@/hooks/useResources";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const baseItems: React.SetStateAction<any[]> = [
-  // {
-  //   title: "Knowledge Base",
-  //   url: "/",
-  //   icon: Notebook,
-  // },
-];
+const baseItems: React.SetStateAction<any[]> = [];
 
 const authenticatedItems = [
   {
@@ -72,16 +67,6 @@ const KnowledgeBaseSidebar = () => {
     selectedResourceId,
     !!selectedResourceId
   );
-  const sections = useMemo(() => {
-    if (!selectedResource) return [] as { id: string; label: string }[];
-    const items: { id: string; label: string }[] = [
-      { id: "title", label: selectedResource.title },
-    ];
-    (selectedResource.sections || []).forEach((s, idx) => {
-      if (s.subtitle) items.push({ id: `s-${idx}`, label: s.subtitle });
-    });
-    return items;
-  }, [selectedResource]);
 
   useEffect(() => {
     setExpandedResourceId(selectedResourceId || undefined);
@@ -185,20 +170,36 @@ const KnowledgeBaseSidebar = () => {
                     {isExpanded &&
                       selectedResource &&
                       selectedResource._id === r._id &&
-                      sections.length > 0 && (
+                      (selectedResource.sections || []).length > 0 && (
                         <div className="ml-6">
                           <SidebarMenu>
-                            {sections.map((s) => (
-                              <SidebarMenuItem key={s.id}>
+                            {selectedResource.sections?.map((s, idx) => (
+                              <SidebarMenuItem key={`section-${idx}`}>
                                 <SidebarMenuButton
                                   asChild
                                   onClick={() => setOpenMobile(false)}
                                 >
                                   <Link
-                                    href={`/?r=${selectedResource._id}#${s.id}`}
+                                    href={`/?r=${selectedResource._id}#s-${idx}`}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const href = `/?r=${selectedResource._id}#s-${idx}`;
+                                      window.history.replaceState(
+                                        null,
+                                        "",
+                                        href
+                                      );
+                                      window.dispatchEvent(
+                                        new CustomEvent("kb-scroll-to", {
+                                          detail: `s-${idx}`,
+                                        })
+                                      );
+                                      setOpenMobile(false);
+                                    }}
                                   >
+                                    <Dot />
                                     <span className="flex-1 text-left text-sm">
-                                      {s.label}
+                                      {s.subtitle || `Section ${idx + 1}`}
                                     </span>
                                   </Link>
                                 </SidebarMenuButton>
