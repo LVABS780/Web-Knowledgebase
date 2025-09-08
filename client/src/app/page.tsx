@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useResourceById } from "@/hooks/useResources";
 import { useSearchParams } from "next/navigation";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ChevronRight } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+} from "@/components/ui/breadcrumb";
 
 export default function PublicKnowledgeBasePage() {
   const searchParams = useSearchParams();
@@ -17,7 +22,8 @@ export default function PublicKnowledgeBasePage() {
     const items: { id: string; label: string }[] = [
       { id: "title", label: selected.title },
     ];
-    (selected.sections || []).forEach((s, idx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (selected.sections || []).forEach((s: any, idx: number) => {
       if (s.subtitle) items.push({ id: `s-${idx}`, label: s.subtitle });
     });
     return items;
@@ -91,6 +97,11 @@ export default function PublicKnowledgeBasePage() {
     };
   }, [outline]);
 
+  const currentLabel = useMemo(() => {
+    const found = outline.find((o) => o.id === activeSection);
+    return found ? found.label : selected?.title || "";
+  }, [activeSection, outline, selected]);
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row">
@@ -111,6 +122,42 @@ export default function PublicKnowledgeBasePage() {
 
             {selected && (
               <article className="prose prose-base sm:prose-lg max-w-none">
+                <div className="mb-6">
+                  <Breadcrumb className="text-sm">
+                    <BreadcrumbItem>
+                      <button
+                        onClick={() => {
+                          window.history.replaceState(null, "", `#title`);
+                          handleLinkClick("title");
+                        }}
+                        className="inline-flex items-center gap-2"
+                      >
+                        {selected.title}
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      </button>
+                    </BreadcrumbItem>
+                    {activeSection !== "title" && (
+                      <BreadcrumbItem>
+                        <BreadcrumbLink
+                          asChild
+                          href={`#${activeSection}`}
+                          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                            e.preventDefault();
+                            window.history.replaceState(
+                              null,
+                              "",
+                              `#${activeSection}`
+                            );
+                            handleLinkClick(activeSection);
+                          }}
+                        >
+                          <span>{currentLabel}</span>
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                    )}
+                  </Breadcrumb>
+                </div>
+
                 <header className="mb-8 lg:mb-12">
                   <h1
                     id="title"
@@ -130,7 +177,7 @@ export default function PublicKnowledgeBasePage() {
                 </header>
 
                 <div className="space-y-8 lg:space-y-12">
-                  {(selected.sections || []).map((s, idx) => (
+                  {(selected.sections || []).map((s: any, idx: number) => (
                     <section key={idx}>
                       {s.subtitle && (
                         <h2
@@ -154,6 +201,7 @@ export default function PublicKnowledgeBasePage() {
             )}
           </div>
         </main>
+
         <aside className="hidden lg:block w-full lg:w-64 flex-shrink-0 lg:border-l border-gray-200 mt-6 lg:mt-0 lg:pl-6 lg:fixed lg:top-40 lg:right-40">
           <div className="p-4 sm:p-6">
             {outline.length > 0 && (
