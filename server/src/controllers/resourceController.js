@@ -294,12 +294,12 @@ exports.getResourcesByCompany = async (req, res) => {
     const { companyId } = req.params;
     const { search, isActive } = req.query;
 
-    if (req.user.role !== "SUPER_ADMIN") {
-      return res.status(403).json({
-        success: false,
-        message: "Only SUPER_ADMIN can view resources by company",
-      });
-    }
+    // if (req.user.role !== "SUPER_ADMIN") {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Only SUPER_ADMIN can view resources by company",
+    //   });
+    // }
 
     let query = { companyId };
 

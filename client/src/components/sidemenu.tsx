@@ -1,4 +1,3 @@
-// KnowledgeBaseSidebar.tsx
 "use client";
 
 import { Home, Notebook, Building, ChevronRight, Dot } from "lucide-react";
@@ -6,7 +5,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
@@ -19,22 +17,17 @@ import Link from "next/link";
 import { useAuth } from "@/app/contexts/auth-context";
 import { Avatar } from "./ui/avatar";
 import { AvatarFallback } from "@radix-ui/react-avatar";
-import { useResourceById, useResourcesQuery } from "@/hooks/useResources";
+import {
+  useResourceById,
+  useResourcesQuery,
+  useResourcesByCompany,
+} from "@/hooks/useResources";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const baseItems: React.SetStateAction<any[]> = [];
 
 const authenticatedItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Knowledge Base",
-    url: "/companies/knowledgebase",
-    icon: Notebook,
-  },
+  { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Knowledge Base", url: "/companies/knowledgebase", icon: Notebook },
 ];
 
 const adminItems = [
@@ -56,13 +49,26 @@ const KnowledgeBaseSidebar = () => {
   const [menuItems, setMenuItems] = useState(baseItems);
   const [expandedResourceId, setExpandedResourceId] = useState<
     string | undefined
-  >(undefined);
-  const { data: resources } = useResourcesQuery();
+  >();
+
+  const pathParts = pathname.split("/").filter(Boolean);
+  const companyId = pathParts[0];
+  const resourceIdFromPath = pathParts[1];
+
+  const { data: globalResources } = useResourcesQuery();
+  const { data: companyResources } = useResourcesByCompany(
+    companyId,
+    {},
+    !!companyId
+  );
+
+  const resources = companyId ? companyResources : globalResources;
 
   const selectedResourceId = useMemo(
-    () => searchParams.get("r") || undefined,
-    [searchParams]
+    () => resourceIdFromPath || searchParams.get("r") || undefined,
+    [resourceIdFromPath, searchParams]
   );
+
   const { data: selectedResource } = useResourceById(
     selectedResourceId,
     !!selectedResourceId
@@ -73,13 +79,9 @@ const KnowledgeBaseSidebar = () => {
   }, [selectedResourceId]);
 
   useEffect(() => {
-    if (role === "SUPER_ADMIN") {
-      setMenuItems(adminItems);
-    } else if (user) {
-      setMenuItems([...authenticatedItems]);
-    } else {
-      setMenuItems(baseItems);
-    }
+    if (role === "SUPER_ADMIN") setMenuItems(adminItems);
+    else if (user) setMenuItems([...authenticatedItems]);
+    else setMenuItems(baseItems);
   }, [role, user]);
 
   return (
@@ -94,7 +96,6 @@ const KnowledgeBaseSidebar = () => {
                     {user?.name!.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user?.name}</span>
                   <span className="truncate text-xs">{user?.email}</span>
@@ -112,15 +113,15 @@ const KnowledgeBaseSidebar = () => {
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild
-                  className={`${
+                  className={
                     pathname === item.url
                       ? "bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
                       : ""
-                  }`}
+                  }
                   onClick={() => setOpenMobile(false)}
                 >
                   <Link href={item.url}>
-                    <item.icon className="text-indigo-950 dark:text-white" />
+                    <item.icon />
                     <span className="flex-1 text-left">{item.title}</span>
                     <ChevronRight className="ml-auto opacity-60" />
                   </Link>
@@ -130,93 +131,93 @@ const KnowledgeBaseSidebar = () => {
           </SidebarMenu>
         </SidebarGroup>
 
-        {pathname === "/" && (
-          <SidebarGroup>
-            <SidebarMenu>
-              {(resources || []).map((r) => {
-                const href = `${pathname}?r=${r._id}`;
-                const isActive = selectedResourceId === r._id;
-                const isExpanded = expandedResourceId === r._id;
-                return (
-                  <React.Fragment key={r._id}>
-                    <SidebarMenuItem>
-                      <SidebarMenuButton
-                        asChild
-                        className={
-                          isActive
-                            ? "bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
-                            : ""
+        <SidebarGroup>
+          <SidebarMenu>
+            {(resources || []).map((r) => {
+              const href = companyId
+                ? `/${companyId}?r=${r._id}`
+                : `/?r=${r._id}`;
+              const isActive = selectedResourceId === r._id;
+              const isExpanded = expandedResourceId === r._id;
+
+              return (
+                <React.Fragment key={r._id}>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      className={
+                        isActive
+                          ? "bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
+                          : ""
+                      }
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      <Link
+                        href={href}
+                        onClick={() =>
+                          setExpandedResourceId((prev) =>
+                            prev === r._id ? undefined : r._id
+                          )
                         }
-                        onClick={() => setOpenMobile(false)}
                       >
-                        <Link
-                          href={href}
-                          onClick={() =>
-                            setExpandedResourceId((prev) =>
-                              prev === r._id ? undefined : r._id
-                            )
-                          }
-                        >
-                          <span className="flex-1 text-left">{r.title}</span>
-                          <ChevronRight
-                            className={`ml-auto opacity-60 transition-transform ${
-                              isExpanded ? "rotate-90" : "rotate-0"
-                            }`}
-                          />
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                        <span className="flex-1 text-left">{r.title}</span>
+                        <ChevronRight
+                          className={`ml-auto opacity-60 transition-transform ${
+                            isExpanded ? "rotate-90" : "rotate-0"
+                          }`}
+                        />
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
 
-                    {isExpanded &&
-                      selectedResource &&
-                      selectedResource._id === r._id &&
-                      (selectedResource.sections || []).length > 0 && (
-                        <div className="ml-6">
-                          <SidebarMenu>
-                            {selectedResource.sections?.map((s, idx) => (
-                              <SidebarMenuItem key={`section-${idx}`}>
-                                <SidebarMenuButton
-                                  asChild
-                                  onClick={() => setOpenMobile(false)}
+                  {isExpanded &&
+                    selectedResource &&
+                    selectedResource._id === r._id &&
+                    (selectedResource.sections || []).length > 0 && (
+                      <div className="ml-6">
+                        <SidebarMenu>
+                          {selectedResource.sections?.map((s, idx) => (
+                            <SidebarMenuItem key={`section-${idx}`}>
+                              <SidebarMenuButton
+                                asChild
+                                onClick={() => setOpenMobile(false)}
+                              >
+                                <Link
+                                  href={
+                                    companyId
+                                      ? `/${companyId}?r=${selectedResource._id}#s-${idx}`
+                                      : `/?r=${selectedResource._id}#s-${idx}`
+                                  }
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    const href = companyId
+                                      ? `/${companyId}?r=${selectedResource._id}#s-${idx}`
+                                      : `/?r=${selectedResource._id}#s-${idx}`;
+                                    window.history.replaceState(null, "", href);
+                                    window.dispatchEvent(
+                                      new CustomEvent("kb-scroll-to", {
+                                        detail: `s-${idx}`,
+                                      })
+                                    );
+                                  }}
                                 >
-                                  <Link
-                                    href={`/?r=${selectedResource._id}#s-${idx}`}
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      const href = `/?r=${selectedResource._id}#s-${idx}`;
-                                      window.history.replaceState(
-                                        null,
-                                        "",
-                                        href
-                                      );
-                                      window.dispatchEvent(
-                                        new CustomEvent("kb-scroll-to", {
-                                          detail: `s-${idx}`,
-                                        })
-                                      );
-                                      setOpenMobile(false);
-                                    }}
-                                  >
-                                    <Dot />
-                                    <span className="flex-1 text-left text-sm">
-                                      {s.subtitle || `Section ${idx + 1}`}
-                                    </span>
-                                  </Link>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            ))}
-                          </SidebarMenu>
-                        </div>
-                      )}
-                  </React.Fragment>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        )}
+                                  <Dot />
+                                  <span className="flex-1 text-left text-sm">
+                                    {s.subtitle || `Section ${idx + 1}`}
+                                  </span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))}
+                        </SidebarMenu>
+                      </div>
+                    )}
+                </React.Fragment>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="shadow-md bg-white dark:bg-black" />
     </Sidebar>
   );
 };

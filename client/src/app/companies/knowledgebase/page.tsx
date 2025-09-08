@@ -22,6 +22,7 @@ import {
 } from "@/hooks/useResources";
 import { type ResourceItem } from "@/services/resourceService";
 import { toast } from "sonner";
+import LetsConnectList from "@/components/companies/connect-list";
 
 export default function ResourcesPage() {
   const { user } = useAuth();
@@ -199,6 +200,7 @@ export default function ResourcesPage() {
           )}
         </CardContent>
       </Card>
+      <LetsConnectList />
     </div>
   );
 }
