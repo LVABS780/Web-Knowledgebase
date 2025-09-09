@@ -3,6 +3,7 @@ export type UserType = {
   role: string;
   email?: string;
   name?: string;
+  companyId: string;
 };
 
 export interface JwtPayload {

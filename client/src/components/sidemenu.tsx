@@ -39,10 +39,13 @@ const adminItems = [
   },
 ];
 
+const isObjectId = (id?: string | null) =>
+  Boolean(id) && /^[0-9a-fA-F]{24}$/.test(id!);
+
 const KnowledgeBaseSidebar = () => {
   const { user } = useAuth();
   const role = user?.role;
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const searchParams = useSearchParams();
   const { setOpenMobile } = useSidebar();
 
@@ -52,12 +55,21 @@ const KnowledgeBaseSidebar = () => {
   >();
 
   const pathParts = pathname.split("/").filter(Boolean);
-  const companyId = pathParts[0];
-  const resourceIdFromPath = pathParts[1];
+
+  let companyId: string | undefined;
+  let resourceIdFromPath: string | undefined;
+
+  if (pathParts[0] === "companies" && pathParts[1] === "knowledgebase") {
+    companyId = user?.companyId;
+    resourceIdFromPath = undefined;
+  } else {
+    if (isObjectId(pathParts[0])) companyId = pathParts[0];
+    if (isObjectId(pathParts[1])) resourceIdFromPath = pathParts[1];
+  }
 
   const { data: globalResources } = useResourcesQuery();
   const { data: companyResources } = useResourcesByCompany(
-    companyId,
+    companyId!,
     {},
     !!companyId
   );
@@ -70,8 +82,8 @@ const KnowledgeBaseSidebar = () => {
   );
 
   const { data: selectedResource } = useResourceById(
-    selectedResourceId,
-    !!selectedResourceId
+    isObjectId(selectedResourceId) ? selectedResourceId : undefined,
+    !!(selectedResourceId && isObjectId(selectedResourceId))
   );
 
   useEffect(() => {
@@ -133,88 +145,93 @@ const KnowledgeBaseSidebar = () => {
 
         <SidebarGroup>
           <SidebarMenu>
-            {(resources || []).map((r) => {
-              const href = companyId
-                ? `/${companyId}?r=${r._id}`
-                : `/?r=${r._id}`;
-              const isActive = selectedResourceId === r._id;
-              const isExpanded = expandedResourceId === r._id;
+            {!["COMPANY_ADMIN", "SUPER_ADMIN"].includes(role!) &&
+              (resources || []).map((r) => {
+                const href = companyId
+                  ? `/${companyId}?r=${r._id}`
+                  : `/?r=${r._id}`;
+                const isActive = selectedResourceId === r._id;
+                const isExpanded = expandedResourceId === r._id;
 
-              return (
-                <React.Fragment key={r._id}>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      className={
-                        isActive
-                          ? "bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
-                          : ""
-                      }
-                      onClick={() => setOpenMobile(false)}
-                    >
-                      <Link
-                        href={href}
-                        onClick={() =>
-                          setExpandedResourceId((prev) =>
-                            prev === r._id ? undefined : r._id
-                          )
+                return (
+                  <React.Fragment key={r._id}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        className={
+                          isActive
+                            ? "bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
+                            : ""
                         }
+                        onClick={() => setOpenMobile(false)}
                       >
-                        <span className="flex-1 text-left">{r.title}</span>
-                        <ChevronRight
-                          className={`ml-auto opacity-60 transition-transform ${
-                            isExpanded ? "rotate-90" : "rotate-0"
-                          }`}
-                        />
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                        <Link
+                          href={href}
+                          onClick={() =>
+                            setExpandedResourceId((prev) =>
+                              prev === r._id ? undefined : r._id
+                            )
+                          }
+                        >
+                          <span className="flex-1 text-left">{r.title}</span>
+                          <ChevronRight
+                            className={`ml-auto opacity-60 transition-transform ${
+                              isExpanded ? "rotate-90" : "rotate-0"
+                            }`}
+                          />
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
 
-                  {isExpanded &&
-                    selectedResource &&
-                    selectedResource._id === r._id &&
-                    (selectedResource.sections || []).length > 0 && (
-                      <div className="ml-6">
-                        <SidebarMenu>
-                          {selectedResource.sections?.map((s, idx) => (
-                            <SidebarMenuItem key={`section-${idx}`}>
-                              <SidebarMenuButton
-                                asChild
-                                onClick={() => setOpenMobile(false)}
-                              >
-                                <Link
-                                  href={
-                                    companyId
-                                      ? `/${companyId}?r=${selectedResource._id}#s-${idx}`
-                                      : `/?r=${selectedResource._id}#s-${idx}`
-                                  }
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    const href = companyId
-                                      ? `/${companyId}?r=${selectedResource._id}#s-${idx}`
-                                      : `/?r=${selectedResource._id}#s-${idx}`;
-                                    window.history.replaceState(null, "", href);
-                                    window.dispatchEvent(
-                                      new CustomEvent("kb-scroll-to", {
-                                        detail: `s-${idx}`,
-                                      })
-                                    );
-                                  }}
+                    {isExpanded &&
+                      selectedResource &&
+                      selectedResource._id === r._id &&
+                      (selectedResource.sections || []).length > 0 && (
+                        <div className="ml-6">
+                          <SidebarMenu>
+                            {selectedResource.sections?.map((s, idx) => (
+                              <SidebarMenuItem key={`section-${idx}`}>
+                                <SidebarMenuButton
+                                  asChild
+                                  onClick={() => setOpenMobile(false)}
                                 >
-                                  <Dot />
-                                  <span className="flex-1 text-left text-sm">
-                                    {s.subtitle || `Section ${idx + 1}`}
-                                  </span>
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          ))}
-                        </SidebarMenu>
-                      </div>
-                    )}
-                </React.Fragment>
-              );
-            })}
+                                  <Link
+                                    href={
+                                      companyId
+                                        ? `/${companyId}?r=${selectedResource._id}#s-${idx}`
+                                        : `/?r=${selectedResource._id}#s-${idx}`
+                                    }
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const href = companyId
+                                        ? `/${companyId}?r=${selectedResource._id}#s-${idx}`
+                                        : `/?r=${selectedResource._id}#s-${idx}`;
+                                      window.history.replaceState(
+                                        null,
+                                        "",
+                                        href
+                                      );
+                                      window.dispatchEvent(
+                                        new CustomEvent("kb-scroll-to", {
+                                          detail: `s-${idx}`,
+                                        })
+                                      );
+                                    }}
+                                  >
+                                    <Dot />
+                                    <span className="flex-1 text-left text-sm">
+                                      {s.subtitle || `Section ${idx + 1}`}
+                                    </span>
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        </div>
+                      )}
+                  </React.Fragment>
+                );
+              })}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
