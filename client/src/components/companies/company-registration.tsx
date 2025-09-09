@@ -24,13 +24,23 @@ import {
   useCreateCompanyMutation,
   useUpdateCompanyMutation,
   useCompanyById,
+  useBulkCreateCompaniesMutation,
 } from "@/hooks/useCompanies";
 import { Edit, Eye, EyeOff, Building } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "../ui/switch";
 import type { ZodTypeAny } from "zod";
+import BulkUpload from "./bulkUpload";
 
 type FormSchema = CompanyCreateForm | CompanyUpdateForm;
+
+interface ImportedCompanyData {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  password: string;
+}
 
 const CompanyRegistrationSheet = ({
   companyId,
@@ -52,6 +62,8 @@ const CompanyRegistrationSheet = ({
     useCreateCompanyMutation();
   const { mutate: updateCompany, isPending: isUpdating } =
     useUpdateCompanyMutation();
+  const { mutate: bulkCreateCompanies, isPending: isBulkCreating } =
+    useBulkCreateCompaniesMutation();
 
   const schema = isEditMode ? companyUpdateSchema : companyCreateSchema;
 
@@ -60,6 +72,7 @@ const CompanyRegistrationSheet = ({
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<FormSchema>({
     resolver: zodResolver(schema as ZodTypeAny),
@@ -96,6 +109,66 @@ const CompanyRegistrationSheet = ({
       } as Partial<FormSchema>);
     }
   }, [isRegisterSheetOpen, companyDetails, reset, isEditMode, companyId]);
+
+  const fieldMappings = {
+    name: ["name", "Name", "company_name", "Company Name"],
+    email: ["email", "Email", "company_email", "Company Email"],
+    phone: ["phone", "Phone", "company_phone", "Company Phone"],
+    address: ["address", "Address", "company_address", "Company Address"],
+    password: ["password", "Password"],
+  };
+
+  const requiredFields = ["name", "email", "password"];
+
+  const tableColumns = [
+    { key: "name" as keyof ImportedCompanyData, label: "Name" },
+    { key: "email" as keyof ImportedCompanyData, label: "Email" },
+    { key: "phone" as keyof ImportedCompanyData, label: "Phone" },
+    { key: "address" as keyof ImportedCompanyData, label: "Address" },
+    {
+      key: "password" as keyof ImportedCompanyData,
+      label: "Password",
+      renderCell: (value: string) => (value ? "••••••" : ""),
+    },
+  ];
+
+  const handleDataImported = (data: ImportedCompanyData[]) => {};
+
+  const handleApplyFirstRow = (data: ImportedCompanyData) => {
+    setValue("name", data.name);
+    setValue("email", data.email);
+    setValue("phone", data.phone);
+    setValue("address", data.address);
+    if (data.password && !isEditMode) {
+      setValue("password", data.password);
+    }
+  };
+
+  const handleBulkSubmit = (data: ImportedCompanyData[]) => {
+    bulkCreateCompanies(data, {
+      onSuccess: (res) => {
+        const createdCount = res?.data?.created?.length ?? 0;
+        const failedCount = res?.data?.failed?.length ?? 0;
+        if (createdCount > 0) {
+          toast.success(
+            `Created ${createdCount} companie(s).${
+              failedCount ? ` ${failedCount} failed.` : ""
+            }`
+          );
+        } else {
+          toast.error("All rows failed to create");
+        }
+        if (failedCount > 0) {
+          console.warn("Bulk create failures:", res.data.failed);
+        }
+        setIsRegisterSheetOpen(false);
+      },
+      onError: (error) => {
+        toast.error("Bulk create failed. Please try again.");
+        console.error("Bulk create error:", error);
+      },
+    });
+  };
 
   const onSubmit: SubmitHandler<FormSchema> = (data) => {
     if (isEditMode && companyId) {
@@ -166,9 +239,25 @@ const CompanyRegistrationSheet = ({
           </SheetTitle>
           <SheetDescription>
             Fill in the details to {isEditMode ? "update" : "onboard a new"}{" "}
-            company.
+            company. You can also import data from a CSV file.
           </SheetDescription>
         </SheetHeader>
+
+        {!isEditMode && (
+          <div className="mt-4">
+            <BulkUpload<ImportedCompanyData>
+              onDataImported={handleDataImported}
+              onApplyFirstRow={handleApplyFirstRow}
+              onBulkSubmit={handleBulkSubmit}
+              fieldMappings={fieldMappings}
+              requiredFields={requiredFields}
+              tableColumns={tableColumns}
+              isLoading={isBulkCreating}
+              description="Upload a CSV file with columns: name, email, phone, address, password"
+            />
+          </div>
+        )}
+
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="mt-3 space-y-6 max-w-4/5 container mx-auto"
