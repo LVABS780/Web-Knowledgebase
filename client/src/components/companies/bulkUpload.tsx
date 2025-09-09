@@ -154,7 +154,10 @@ function BulkUpload<T extends Record<string, any>>({
     <div
       className={`p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border ${className}`}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div
+        className="flex items-center justify-between mb-3 cursor-pointer"
+        onClick={() => setShowImportSection(!showImportSection)}
+      >
         <div className="flex items-center gap-2">
           <Upload className="h-4 w-4" />
           <span className="font-medium text-sm">Import from CSV</span>
@@ -163,7 +166,7 @@ function BulkUpload<T extends Record<string, any>>({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => setShowImportSection(!showImportSection)}
+          // onClick={() => setShowImportSection(!showImportSection)}
           className="p-1"
         >
           {showImportSection ? (
