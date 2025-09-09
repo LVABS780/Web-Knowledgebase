@@ -6,6 +6,7 @@ export type LetsConnect = {
   email: string;
   phone?: string;
   services: string[];
+  companyId: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -17,8 +18,11 @@ export type CreateLetsConnectPayload = {
   services: string[];
 };
 
-export async function fetchLetsConnect(): Promise<LetsConnect[]> {
-  const res = await API.get("/connect");
+export async function fetchLetsConnect(
+  companyId?: string
+): Promise<LetsConnect[]> {
+  const url = companyId ? `/connect/${companyId}` : "/connect";
+  const res = await API.get(url);
   return res.data.data as LetsConnect[];
 }
 

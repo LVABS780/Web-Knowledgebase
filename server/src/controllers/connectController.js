@@ -78,7 +78,17 @@ exports.createLetsConnect = async (req, res) => {
 
 exports.getLetsConnect = async (req, res) => {
   try {
-    const entries = await LetsConnect.find().sort({ createdAt: -1 }).lean();
+    const { companyId } = req.params;
+    let query = {};
+
+    if (companyId && mongoose.Types.ObjectId.isValid(companyId)) {
+      query.companyId = companyId;
+    }
+
+    const entries = await LetsConnect.find(query)
+      .sort({ createdAt: -1 })
+      .populate("companyId", "name")
+      .lean();
 
     return res.status(200).json({
       success: true,

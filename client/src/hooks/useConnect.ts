@@ -11,15 +11,20 @@ export function useCreateLetsConnectMutation() {
   return useMutation({
     mutationFn: (payload: CreateLetsConnectPayload & { companyId: string }) =>
       createLetsConnect(payload),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["letsConnect"] });
+      queryClient.invalidateQueries({
+        queryKey: ["letsConnect", variables.companyId],
+      });
     },
   });
 }
 
-export function useLetsConnectQuery() {
+export function useLetsConnectQuery(companyId?: string) {
+  const queryKey = companyId ? ["letsConnect", companyId] : ["letsConnect"];
+
   return useQuery<LetsConnect[]>({
-    queryKey: ["letsConnect"],
-    queryFn: fetchLetsConnect,
+    queryKey,
+    queryFn: () => fetchLetsConnect(companyId),
   });
 }
