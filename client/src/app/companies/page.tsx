@@ -207,7 +207,7 @@ const CompanyPage = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-end items-center">
+      <div className="flex justify-end items-center gap-2">
         <CompanyRegistrationSheet />
         <Link
           href="/companies/bulk-upload"
@@ -217,7 +217,7 @@ const CompanyPage = () => {
             className="bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
             variant="outline"
           >
-            Bulk Upload
+            Import Companies
           </Button>
         </Link>
       </div>

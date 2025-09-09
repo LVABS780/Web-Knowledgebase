@@ -13,6 +13,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+interface AddressOption {
+  id: string;
+  label: string;
+  value: string;
+}
 
 interface BulkUploadProps<T> {
   onDataImported: (data: T[]) => void;
@@ -33,6 +46,8 @@ interface BulkUploadProps<T> {
   showBulkSubmit?: boolean;
   description?: string;
   className?: string;
+  addressOptions?: AddressOption[];
+  dynamicFields?: string[];
 }
 
 function BulkUpload<T extends Record<string, any>>({
@@ -50,6 +65,8 @@ function BulkUpload<T extends Record<string, any>>({
   showBulkSubmit = true,
   description,
   className = "",
+  addressOptions = [],
+  dynamicFields = [],
 }: BulkUploadProps<T>) {
   const [showImportSection, setShowImportSection] = useState(false);
   const [importedRows, setImportedRows] = useState<T[]>([]);
@@ -84,9 +101,20 @@ function BulkUpload<T extends Record<string, any>>({
                 const value = possibleColumns.find(
                   (col) => row[col] !== undefined
                 );
-                mapped[fieldKey as keyof T] = (
-                  value ? row[value] : ""
-                ) as T[keyof T];
+                let mappedValue = value ? row[value] : "";
+
+                if (dynamicFields.includes(fieldKey) && mappedValue) {
+                  const matchingAddress = addressOptions.find(
+                    (addr) =>
+                      addr.label.toLowerCase() === mappedValue.toLowerCase() ||
+                      addr.value.toLowerCase() === mappedValue.toLowerCase()
+                  );
+                  if (matchingAddress) {
+                    mappedValue = matchingAddress.id;
+                  }
+                }
+
+                mapped[fieldKey as keyof T] = mappedValue as T[keyof T];
               });
 
               return mapped;
@@ -150,6 +178,54 @@ function BulkUpload<T extends Record<string, any>>({
     onBulkSubmit(importedRows);
   };
 
+  const handleDynamicFieldChange = (
+    rowIndex: number,
+    field: string,
+    value: string
+  ) => {
+    const updatedRows = [...importedRows];
+    updatedRows[rowIndex] = {
+      ...updatedRows[rowIndex],
+      [field]: value as T[keyof T],
+    };
+    setImportedRows(updatedRows);
+  };
+
+  const renderCellContent = (row: T, rowIndex: number, col: any) => {
+    const value = row[col.key];
+
+    if (dynamicFields.includes(String(col.key)) && col.key === "address") {
+      return (
+        <Select
+          value={String(value || "")}
+          onValueChange={(newValue) =>
+            handleDynamicFieldChange(rowIndex, String(col.key), newValue)
+          }
+        >
+          <SelectTrigger className="w-full min-w-[150px]">
+            <SelectValue placeholder="Select address" />
+          </SelectTrigger>
+          <SelectContent>
+            {addressOptions.map((option) => (
+              <SelectItem
+                key={option.id}
+                value={option.id}
+              >
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    if (col.renderCell) {
+      return col.renderCell(value);
+    }
+
+    return String(value || "");
+  };
+
   return (
     <div
       className={`p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border ${className}`}
@@ -166,7 +242,6 @@ function BulkUpload<T extends Record<string, any>>({
           type="button"
           variant="ghost"
           size="sm"
-          // onClick={() => setShowImportSection(!showImportSection)}
           className="p-1"
         >
           {showImportSection ? (
@@ -211,10 +286,11 @@ function BulkUpload<T extends Record<string, any>>({
                     {importedRows.slice(0, maxPreviewRows).map((row, idx) => (
                       <TableRow key={idx}>
                         {tableColumns.map((col) => (
-                          <TableCell key={String(col.key)}>
-                            {col.renderCell
-                              ? col.renderCell(row[col.key])
-                              : String(row[col.key] || "")}
+                          <TableCell
+                            key={String(col.key)}
+                            className="min-w-[120px]"
+                          >
+                            {renderCellContent(row, idx, col)}
                           </TableCell>
                         ))}
                       </TableRow>
