@@ -43,8 +43,8 @@ export function useResourcesByCompany(
   enabled: boolean = true
 ) {
   return useQuery<ResourceItem[]>({
-    queryKey: ["resources", "company", companyId, params],
-    queryFn: () => fetchResourcesByCompany(companyId!, params),
+    queryKey: ["resources", "company", companyId],
+    queryFn: () => fetchResourcesByCompany(companyId, params),
     enabled: enabled && !!companyId,
   });
 }

@@ -12,12 +12,16 @@ const {
 } = require("../controllers/resourceController");
 
 router.get("/", getResources);
-
 router.post("/", userAuth, createResource);
+
+router.get("/categories", userAuth, getCategoriesByCompany);
+
+router.get("/company/:companyId", getResourcesByCompany);
+
+router.get("/:resourceId", getResourceById);
 router.put("/:resourceId", userAuth, updateResource);
 router.delete("/:resourceId", userAuth, deleteResource);
-router.get("/categories", userAuth, getCategoriesByCompany);
-router.get("/company/:companyId", getResourcesByCompany);
-router.get("/:resourceId", getResourceById);
+
+module.exports = router;
 
 module.exports = router;

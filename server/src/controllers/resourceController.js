@@ -136,6 +136,13 @@ exports.getResourceById = async (req, res) => {
       });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(resourceId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid resource ID format",
+      });
+    }
+
     let query = { _id: resourceId };
 
     if (req.user && req.user.role === "COMPANY_ADMIN") {
@@ -164,11 +171,20 @@ exports.getResourceById = async (req, res) => {
     });
   } catch (error) {
     console.error("Get resource by ID error:", error.message);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid resource ID format",
+      });
+    }
+
     return res
       .status(500)
       .json({ success: false, message: "Failed to fetch resource" });
   }
 };
+
 exports.updateResource = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -294,12 +310,19 @@ exports.getResourcesByCompany = async (req, res) => {
     const { companyId } = req.params;
     const { search, isActive } = req.query;
 
-    // if (req.user.role !== "SUPER_ADMIN") {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Only SUPER_ADMIN can view resources by company",
-    //   });
-    // }
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid company ID format",
+      });
+    }
 
     let query = { companyId };
 
@@ -327,6 +350,14 @@ exports.getResourcesByCompany = async (req, res) => {
     });
   } catch (error) {
     console.error("Get resources by company error:", error.message);
+
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid company ID format",
+      });
+    }
+
     return res
       .status(500)
       .json({ success: false, message: "Failed to fetch resources" });
