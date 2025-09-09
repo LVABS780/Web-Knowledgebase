@@ -22,6 +22,7 @@ import {
 import CompanyRegistrationSheet from "../../components/companies/company-registration";
 import { CompanyItem } from "@/services/companyService";
 import { toast } from "sonner";
+import Link from "next/link";
 
 const CompanyPage = () => {
   const { data: companies = [], isLoading } = useCompaniesQuery();
@@ -208,6 +209,17 @@ const CompanyPage = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-end items-center">
         <CompanyRegistrationSheet />
+        <Link
+          href="/companies/bulk-upload"
+          passHref
+        >
+          <Button
+            className="bg-[#6A00B4] text-white hover:bg-[#7f04d4] hover:text-white"
+            variant="outline"
+          >
+            Bulk Upload
+          </Button>
+        </Link>
       </div>
 
       <Card className="shadow-sm">
