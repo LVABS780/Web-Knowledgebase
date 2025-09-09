@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCompany,
+  createCompaniesBulk,
   deleteCompany,
   fetchCompanies,
   fetchCompanyById,
   updateCompany,
   CreateCompanyPayload,
+  BulkCreateCompanyPayload,
   UpdateCompanyPayload,
   CompanyItem,
 } from "@/services/companyService";
@@ -32,6 +34,17 @@ export function useCreateCompanyMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateCompanyPayload) => createCompany(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companies"] });
+    },
+  });
+}
+
+export function useBulkCreateCompaniesMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: BulkCreateCompanyPayload) =>
+      createCompaniesBulk(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["companies"] });
     },

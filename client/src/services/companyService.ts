@@ -36,6 +36,8 @@ export type CreateCompanyPayload = {
   address?: string;
 };
 
+export type BulkCreateCompanyPayload = CreateCompanyPayload[];
+
 export async function fetchCompanies(): Promise<CompanyItem[]> {
   const res = await API.get("/company");
   return res.data.data as CompanyItem[];
@@ -51,6 +53,18 @@ export async function fetchCompanyById(
 export async function createCompany(payload: CreateCompanyPayload) {
   const res = await API.post("/company", payload);
   return res.data;
+}
+
+export async function createCompaniesBulk(payload: BulkCreateCompanyPayload) {
+  const res = await API.post("/company", payload);
+  return res.data as {
+    success: boolean;
+    message: string;
+    data: {
+      created: Array<{ company: Company; companyAdmin: CompanyAdmin }>;
+      failed: Array<{ index: number; error: string }>;
+    };
+  };
 }
 
 export type UpdateCompanyPayload = {

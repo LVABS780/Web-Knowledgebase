@@ -2,96 +2,126 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const { User, Company } = require("../models/user");
 
+async function createOneCompanyTransactional(session, reqUser, payload) {
+  const { name, email, phone, password, address } = payload;
+  if (!name || !email || !password) {
+    throw new Error("Missing required fields");
+  }
+
+  const orClauses = [{ email }];
+  if (phone) orClauses.push({ phone });
+
+  const existingUser = await User.findOne({ $or: orClauses }).lean();
+  if (existingUser) {
+    throw new Error("Email or phone number already exists");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newCompanyArr = await Company.create(
+    [
+      {
+        name,
+        address: address || "",
+        superAdminId: reqUser.id,
+      },
+    ],
+    { session }
+  );
+  const newCompany = newCompanyArr[0];
+
+  const createdUsers = await User.create(
+    [
+      {
+        name,
+        email,
+        ...(phone ? { phone } : {}),
+        password: hashedPassword,
+        role: "COMPANY_ADMIN",
+        companyId: newCompany._id,
+      },
+    ],
+    { session }
+  );
+  const companyAdmin = createdUsers[0];
+  const safeAdmin = companyAdmin.toObject();
+  delete safeAdmin.password;
+
+  return { company: newCompany, companyAdmin: safeAdmin };
+}
+
 exports.createCompany = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  if (req.user.role !== "SUPER_ADMIN") {
+    return res.status(403).json({ success: false, message: "Access denied" });
+  }
 
-  try {
-    if (req.user.role !== "SUPER_ADMIN") {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(403).json({ success: false, message: "Access denied" });
-    }
+  const body = req.body;
 
-    const { name, email, phone, password, address } = req.body;
-
-    if (!name || !email || !password) {
-      await session.abortTransaction();
-      session.endSession();
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
-    }
-
-    const orClauses = [{ email: email }];
-    if (phone) {
-      orClauses.push({ phone: phone });
-    }
-
-    const existingUser = await User.findOne({ $or: orClauses }).lean();
-
-    if (existingUser) {
-      await session.abortTransaction();
-      session.endSession();
+  if (Array.isArray(body)) {
+    if (body.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "Email or phone number already exists",
+        message: "Request body must be a non-empty array",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const created = [];
+    const failed = [];
 
-    const newCompanyArr = await Company.create(
-      [
-        {
-          name,
-          address: address || "",
-          superAdminId: req.user.id,
-        },
-      ],
-      { session }
+    for (const [index, item] of body.entries()) {
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        const result = await createOneCompanyTransactional(
+          session,
+          req.user,
+          item || {}
+        );
+        await session.commitTransaction();
+        session.endSession();
+        created.push(result);
+      } catch (err) {
+        await session.abortTransaction();
+        session.endSession();
+        failed.push({
+          index,
+          error: err.message || "Failed to create company",
+        });
+      }
+    }
+
+    return res.status(207).json({
+      success: true,
+      message: "Bulk create processed",
+      data: { created, failed },
+    });
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const result = await createOneCompanyTransactional(
+      session,
+      req.user,
+      body || {}
     );
-
-    const newCompany = newCompanyArr[0];
-
-    const createdUsers = await User.create(
-      [
-        {
-          name,
-          email,
-          ...(phone ? { phone } : {}),
-          password: hashedPassword,
-          role: "COMPANY_ADMIN",
-          companyId: newCompany._id,
-        },
-      ],
-      { session }
-    );
-
-    const companyAdmin = createdUsers[0];
-
     await session.commitTransaction();
     session.endSession();
-
-    const safeAdmin = companyAdmin.toObject();
-    delete safeAdmin.password;
-
     return res.status(201).json({
       success: true,
       message: "Company created successfully",
-      data: {
-        company: newCompany,
-        companyAdmin: safeAdmin,
-      },
+      data: result,
     });
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
-
     console.error("Create company error:", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Failed to create company" });
+    const msg =
+      err.message === "Missing required fields" ||
+      err.message?.includes("already exists")
+        ? err.message
+        : "Failed to create company";
+    return res.status(400).json({ success: false, message: msg });
   }
 };
 
