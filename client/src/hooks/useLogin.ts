@@ -13,6 +13,7 @@ export const useLogin = () => {
         role: data.user.role,
         email: data.user.email,
         name: data.user.name,
+        companyId: data.user.companyId,
       });
     },
   });

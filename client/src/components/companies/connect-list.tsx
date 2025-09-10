@@ -20,11 +20,12 @@ import { type LetsConnect } from "../../services/connectServices";
 
 export default function LetsConnectList() {
   const { user } = useAuth();
+  const companyId = user?.companyId;
+  console.log(companyId);
   const isCompanyAdmin = user?.role === "COMPANY_ADMIN";
-
   const [selectedType, setSelectedType] = useState<string>("all");
 
-  const { data: letsConnects = [], isLoading } = useLetsConnectQuery();
+  const { data: letsConnects = [], isLoading } = useLetsConnectQuery(companyId);
 
   const filteredData = useMemo(() => {
     if (selectedType === "all") return letsConnects;

@@ -1,6 +1,13 @@
 "use client";
 
-import { Home, Notebook, Building, ChevronRight, Dot } from "lucide-react";
+import {
+  Home,
+  Notebook,
+  Building,
+  ChevronRight,
+  Dot,
+  Database,
+} from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Sidebar,
@@ -23,11 +30,17 @@ import {
   useResourcesByCompany,
 } from "@/hooks/useResources";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const baseItems: React.SetStateAction<any[]> = [];
 
 const authenticatedItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Knowledge Base", url: "/companies/knowledgebase", icon: Notebook },
+  {
+    title: "Connect Service",
+    url: "/companies/let-connect",
+    icon: Database,
+  },
 ];
 
 const adminItems = [

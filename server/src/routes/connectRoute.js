@@ -5,10 +5,10 @@ const {
   getLetsConnect,
 } = require("../controllers/connectController");
 
-router.get("/connect", getLetsConnect);
+router.get("/", getLetsConnect);
 
-router.get("/connect/:companyId", getLetsConnect);
+router.get("/:companyId", getLetsConnect);
 
-router.post("/connect/:companyId", createLetsConnect);
+router.post("/:companyId", createLetsConnect);
 
 module.exports = router;

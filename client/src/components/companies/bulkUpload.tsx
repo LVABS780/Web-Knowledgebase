@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, X } from "lucide-react";
+import { Upload, FileText, X, File } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import {
@@ -247,7 +247,7 @@ function BulkUpload<T extends Record<string, any>>({
           {showImportSection ? (
             <X className="h-4 w-4" />
           ) : (
-            <FileText className="h-4 w-4" />
+            <File className="h-4 w-4" />
           )}
         </Button>
       </div>

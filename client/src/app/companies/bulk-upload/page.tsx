@@ -125,7 +125,7 @@ function CompaniesBulkUploadPage() {
               },
             ]}
             isLoading={isBulkCreating}
-            description="Upload CSV with: name, email, phone, address, password. Address values will be matched to predefined locations."
+            description="Upload CSV with: name, email, phone, address, password."
             showApplyFirstRow={false}
             addressOptions={ADDRESS_OPTIONS}
             dynamicFields={["address"]}

@@ -31,7 +31,7 @@ const servicesOptions = [
 ];
 
 type Props = {
-  companyId?: string; // optional — parent can pass explicitly
+  companyId?: string;
 };
 
 export default function LetsConnectRegistrationSheet({ companyId }: Props) {
@@ -202,7 +202,7 @@ export default function LetsConnectRegistrationSheet({ companyId }: Props) {
             <Button
               type="submit"
               className="bg-[#6A00B4] text-white hover:bg-[#7f04d4]"
-              disabled={isPending || !companyId} // disable if no companyId
+              disabled={isPending || !companyId}
             >
               {isPending ? "Submitting..." : "Submit"}
             </Button>

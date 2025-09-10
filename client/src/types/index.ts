@@ -1,10 +1,10 @@
-export type UserType = {
+export interface UserType {
   _id: string;
   role: string;
   email?: string;
   name?: string;
   companyId: string;
-};
+}
 
 export interface JwtPayload {
   exp: number;

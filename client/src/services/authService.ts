@@ -10,7 +10,13 @@ export interface LoginPayload {
 
 export interface LoginResponse {
   token: string;
-  user: { _id: string; role: string; name?: string; email?: string };
+  user: {
+    _id: string;
+    role: string;
+    name?: string;
+    email?: string;
+    companyId: string;
+  };
   message: string;
 }
 
